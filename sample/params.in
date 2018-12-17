@@ -1,0 +1,6 @@
+# Iteration number in burn-in period
+1000
+# Iteration number after burn-in
+5000
+# Iteration number per sample
+200
