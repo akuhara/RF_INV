@@ -4,3 +4,55 @@
 5000
 # Iteration number per sample
 200
+# Number of chains per processor
+10
+# Number of non-tempered chains per processor
+2
+# Highest temperature
+100.d0
+# Random number seed
+12345678
+# Number of traces
+1
+# Ray parameter
+0.06
+# Gaussian parameter
+8.0
+# Observed RF file
+test.sac
+# Start/End time
+0.0 10.0
+# Station depth (km)
+2.500
+# Reference velocity file
+test.vel
+# Vp mode (0: Fixed, 1: solved)
+1
+# Min./Max. # of interfaces
+1 101
+# Min./Max. of interface depth
+2.500 60.0
+# Min./Max. of Vs
+0.1   5.0
+# Min./Max. of Vp
+1.5   8.5
+# standard deviation for Vs prior
+0.5
+# standard deviation for Vp prior
+0.86
+# standard deviation for depth proposal
+1.0
+# standard deviation for Vs proposal
+0.1
+# standard deviation for Vp proposal
+0.1
+# Number of bins for depth
+100
+# Number of bins for Vs
+50
+# Number of bins for Vp
+50
+# Number of bins for amplitudes
+100
+# Min./Max. amplitudes to be displayed
+-2.0 2.0

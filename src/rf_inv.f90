@@ -15,12 +15,17 @@ program main
      stop
   end if
   
-  ! read parameters from file
+  ! Read parameters from file
   verb = .false.
   if (rank == 0) verb = .true.  
   call get_params(verb, "params.in") ! if rank == 0 -> verbose
   
+  
+  
 
-
+  
+  ! Finish
+  call mpi_finalize(ierr)
+  
   stop
 end program main
