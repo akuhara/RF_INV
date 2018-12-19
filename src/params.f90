@@ -3,8 +3,8 @@ module params
 
   ! constant
   integer, parameter :: clen_max = 200
-  integer, parameter :: io_param = 10
-  integer, parameter :: npts_max = 2000
+  integer, parameter :: io_param = 10, io_obs = 20
+  integer, parameter :: npts_max = 2000, nlay_max = 200
   
   ! iteration
   integer :: nburn, niter, ncorr
@@ -35,13 +35,14 @@ module params
   integer :: k_min, k_max
   real(8) :: z_min, z_max
   real(8) :: vs_min, vs_max, vp_min, vp_max
+  real(8) :: sig_min, sig_max
   real(8) :: dev_vs_prior, dev_vp_prior
   
   ! proposal
-  real(8) :: dev_z, dev_vs, dev_vp
+  real(8) :: dev_z, dev_vs, dev_vp, dev_sig
 
   ! output
-  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp
+  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig
   real(8) :: amp_min, amp_max
 
   !=====================================================================
@@ -125,11 +126,14 @@ contains
     read(line,*) vp_min, vp_max
 
     call get_line(io_param, line)
+    read(line,*) sig_min, sig_max
+
+    call get_line(io_param, line)
     read(line,*) dev_vs_prior
 
     call get_line(io_param, line)
     read(line,*) dev_vp_prior
-
+    
     call get_line(io_param, line)
     read(line,*) dev_z
 
@@ -140,6 +144,9 @@ contains
     read(line,*) dev_vp
 
     call get_line(io_param, line)
+    read(line,*) dev_sig
+
+    call get_line(io_param, line)
     read(line,*) nbin_z
     
     call get_line(io_param, line)
@@ -147,6 +154,9 @@ contains
     
     call get_line(io_param, line)
     read(line,*) nbin_vp
+
+    call get_line(io_param, line)
+    read(line,*) nbin_sig
 
     call get_line(io_param, line)
     read(line,*) nbin_amp
@@ -185,14 +195,18 @@ contains
        write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
        write(*,*)"Min./Max. of Vs prior                  : ", vs_min, vs_max
        write(*,*)"Min./Max. of Vp prior                  : ", vp_min, vp_max
+       write(*,*)"Min./Max. of noise sigma prior         : ", sig_min, sig_max
        write(*,*)"Standard deviation for Vs prior        : ", dev_vs_prior
        write(*,*)"Standard deviation for Vp prior        : ", dev_vp_prior
        write(*,*)"Standard deviation for depth proposal  : ", dev_z
        write(*,*)"Standard deviation for Vs proposal     : ", dev_vs
        write(*,*)"Standard deviation for Vp proposal     : ", dev_vp
+       write(*,*)"Standard deviation for sigma proposal  : ", dev_sig
        write(*,*)"# of bins for depth                    : ", nbin_z
        write(*,*)"# of bins for Vs                       : ", nbin_vs
        write(*,*)"# of bins for Vp                       : ", nbin_vp
+       write(*,*)"# of bins for noise sigma              : ", nbin_sig
+       
        write(*,*)"# of bins for amplitudes               : ", nbin_amp
        write(*,*)"Min./Max. amplitudes to be displayed   : ", amp_min, amp_max
        

@@ -19,9 +19,9 @@
 # Gaussian parameter
 8.0
 # Observed RF file
-test.sac
+151207.075005.95.r.mean
 # Start/End time
-0.0 10.0
+-1.0 10.0
 # Station depth (km)
 2.500
 # Reference velocity file
@@ -36,6 +36,8 @@ test.vel
 0.1   5.0
 # Min./Max. of Vp
 1.5   8.5
+# Min./Max. of noise sigma
+0.01 0.1
 # standard deviation for Vs prior
 0.5
 # standard deviation for Vp prior
@@ -46,13 +48,18 @@ test.vel
 0.1
 # standard deviation for Vp proposal
 0.1
+# standard deviation for noise sigma
+0.05
 # Number of bins for depth
 100
 # Number of bins for Vs
 50
 # Number of bins for Vp
 50
+# Number of bins for noise sigma
+50
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
 -2.0 2.0
+

@@ -1,5 +1,7 @@
 program main
   use params
+  use mt19937
+  use fftw
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -15,14 +17,21 @@ program main
      stop
   end if
   
-  ! Read parameters from file
+  ! Set verbose mode for rank 0
   verb = .false.
   if (rank == 0) verb = .true.  
+
+  ! Read parameters from file
   call get_params(verb, "params.in") ! if rank == 0 -> verbose
   
+  ! Read observed files
+  call read_obs(verb)
   
-  
+  ! Initialize random number generator
+  call sgrnd(iseed)
 
+  ! Initialize FFTW
+  call init_fftw()
   
   ! Finish
   call mpi_finalize(ierr)
