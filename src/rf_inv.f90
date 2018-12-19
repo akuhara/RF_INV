@@ -2,6 +2,7 @@ program main
   use params
   use mt19937
   use fftw
+  use model
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -33,6 +34,9 @@ program main
   ! Initialize FFTW
   call init_fftw()
   
+  ! Read reference velocity model
+  call read_ref_model(verb)
+
   ! Finish
   call mpi_finalize(ierr)
   

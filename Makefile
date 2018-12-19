@@ -20,7 +20,7 @@ $(TARGET): $(OBJS)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(MF90) $(FFLAGS) $(FFTW) $^ -o $@
 
-src/rf_inv.o: params.mod mt19937.mod fftw.mod
+src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod
 src/read_obs.o: params.mod
 src/fftw.o: params.mod
 src/model.o: params.mod mt19937.mod sort.mod

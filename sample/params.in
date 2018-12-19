@@ -23,15 +23,15 @@
 # Start/End time
 -1.0 10.0
 # Station depth (km)
-2.500
+4.400
 # Reference velocity file
-test.vel
+ref_vel
 # Vp mode (0: Fixed, 1: solved)
 1
 # Min./Max. # of interfaces
 1 101
 # Min./Max. of interface depth
-2.500 60.0
+4.4 40.0
 # Min./Max. of Vs
 0.1   5.0
 # Min./Max. of Vp
