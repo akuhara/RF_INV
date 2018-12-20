@@ -3,7 +3,7 @@ program main
   use mt19937
   use fftw
   use model
-  use covariance
+  use lppd
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -22,7 +22,10 @@ program main
   ! Set verbose mode for rank 0
   verb = .false.
   if (rank == 0) verb = .true.  
-
+  
+  !============================================================
+  ! Initialize
+  !============================================================  
   ! Read parameters from file
   call get_params(verb, "params.in") ! if rank == 0 -> verbose
   
@@ -40,9 +43,17 @@ program main
 
   ! Generate initial model
   call init_model()
+
+  ! Initialize noise sigma
+  call init_sig(verb)
   
   ! Calculate covariacne matrix
   call calc_r_inv(verb)
+
+  !============================================================
+  ! MCMC
+  !============================================================  
+
 
   ! Finish
   call mpi_finalize(ierr)

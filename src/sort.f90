@@ -9,7 +9,7 @@ contains
     integer, intent(in) :: il, ir
     real(8), intent(inout) :: a(:), b(:), c(:)
     integer :: ipiv, i, j
-    real(8) :: piv, tmp
+    real(8) :: piv
     
     if (ir - il <= 0) return
     
