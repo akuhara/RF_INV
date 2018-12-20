@@ -39,7 +39,7 @@ contains
     integer :: ierr, nref, i
     real(8) :: z_old, z_tmp
     
-    
+    ! check if file exists or not
     open(io_ref, file = vel_file, iostat = ierr, status = "old")
     if (ierr /= 0 .and. verb)  then
        write(*,*)"ERROR: cannot open ", trim(vel_file)
@@ -47,6 +47,7 @@ contains
        stop
     end if
     
+    ! First, obtain # of layers and depth increment
     nref = 0
     dz_ref = -100.d0
     z_old  = -999.d0
@@ -72,20 +73,22 @@ contains
 
     allocate(vp_ref(nref), vs_ref(nref))
     
+    ! get reference velocity
     rewind(io_ref)
     do i = 1, nref
        read(io_ref,*) z_tmp, vp_ref(i), vs_ref(i)
     end do
     close(io_ref)
     
-
+    ! Display
     if (verb) then
        write(*,*)
        write(*,*) "--- Reference model ---"
        write(*,*) "# of layer: ", nref
        do i = 1, nref
           if (mod(i,100) == 1) then
-             write(*,*)"#", i, z_ref_min + (i - 1) * dz_ref, vp_ref(i), vs_ref(i) 
+             write(*,*)"#", i, z_ref_min + (i - 1) * dz_ref, &
+                  & vp_ref(i), vs_ref(i) 
           end if
        end do
     end if
@@ -103,7 +106,6 @@ contains
     real(8), intent(out) :: alpha(nlay_max), beta(nlay_max)
     real(8), intent(out) :: h(nlay_max), rho(nlay_max)
     integer :: i, j
-
     
     i = 0
 
@@ -143,7 +145,6 @@ contains
     ! Total number of layers (including ocean and half-space)
     nlay = i
     
-    
     return
   end subroutine format_model
   
@@ -153,7 +154,7 @@ contains
     implicit none 
     real(8), intent(in) :: a1
     real(8) :: a2, a3, a4, a5
-
+    
     a2 = a1 * a1
     a3 = a2 * a1
     a4 = a3 * a1
@@ -161,7 +162,9 @@ contains
     
     p = 1.6612 * a1 - 0.4721 * a2 + 0.0671 * a3  - 0.0043 * a4 &
          & + 0.000106 * a5
-    
+    ! Empirical relations between density and Vp (Brocher, 2005)
+
+
     return 
   end function vp_to_rho
 

@@ -3,6 +3,7 @@ program main
   use mt19937
   use fftw
   use model
+  use covariance
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -36,6 +37,12 @@ program main
   
   ! Read reference velocity model
   call read_ref_model(verb)
+
+  ! Generate initial model
+  call init_model()
+  
+  ! Calculate covariacne matrix
+  call calc_r_inv(verb)
 
   ! Finish
   call mpi_finalize(ierr)
