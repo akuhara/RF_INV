@@ -19,11 +19,14 @@ module params
   ! observation
   integer :: ntrc, nsmp
   character(clen_max), allocatable :: obs_files(:)
-  real(8), allocatable :: rayps(:), a_gus(:)
+  real(8), allocatable :: rayps(:)
   real(8), allocatable :: obs(:,:)
   real(8) :: delta, t_start, t_end
   real(8) :: sdep
 
+  ! Receiver function
+  integer :: nfft
+  real(8), allocatable :: a_gus(:)
   
   ! reference velocity
   character(clen_max) :: vel_file
@@ -34,15 +37,14 @@ module params
   ! prior
   integer :: k_min, k_max
   real(8) :: z_min, z_max
-  real(8) :: vs_min, vs_max, vp_min, vp_max
+  real(8) :: dvs_min, dvs_max, dvp_min, dvp_max
   real(8) :: sig_min, sig_max
-  real(8) :: dev_vs_prior, dev_vp_prior
   
   ! proposal
-  real(8) :: dev_z, dev_vs, dev_vp, dev_sig
+  real(8) :: dev_z, dev_dvs, dev_dvp, dev_sig
 
   ! output
-  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig
+  integer :: nbin_z, nbin_dvs, nbin_dvp, nbin_amp, nbin_sig
   real(8) :: amp_min, amp_max
 
   !=====================================================================
@@ -96,6 +98,9 @@ contains
        read(line,*) a_gus(itrc)
     end do
     
+    call get_line(io_param, line)
+    read(line,*) nfft
+       
     do itrc = 1, ntrc
        call get_line(io_param, line)
        read(line,*) obs_files(itrc)
@@ -120,28 +125,22 @@ contains
     read(line,*) z_min, z_max
 
     call get_line(io_param, line)
-    read(line,*) vs_min, vs_max
+    read(line,*) dvs_min, dvs_max
 
     call get_line(io_param, line)
-    read(line,*) vp_min, vp_max
+    read(line,*) dvp_min, dvp_max
 
     call get_line(io_param, line)
     read(line,*) sig_min, sig_max
-
-    call get_line(io_param, line)
-    read(line,*) dev_vs_prior
-
-    call get_line(io_param, line)
-    read(line,*) dev_vp_prior
     
     call get_line(io_param, line)
     read(line,*) dev_z
 
     call get_line(io_param, line)
-    read(line,*) dev_vs
+    read(line,*) dev_dvs
     
     call get_line(io_param, line)
-    read(line,*) dev_vp
+    read(line,*) dev_dvp
 
     call get_line(io_param, line)
     read(line,*) dev_sig
@@ -150,10 +149,10 @@ contains
     read(line,*) nbin_z
     
     call get_line(io_param, line)
-    read(line,*) nbin_vs
+    read(line,*) nbin_dvs
     
     call get_line(io_param, line)
-    read(line,*) nbin_vp
+    read(line,*) nbin_dvp
 
     call get_line(io_param, line)
     read(line,*) nbin_sig
@@ -188,23 +187,22 @@ contains
        end do
        write(*,*)"Start/End time                         : ", t_start, &
             & t_end
+       write(*,*)"Sample number used in FFT              : ", nfft
        write(*,*)"Station depth                          : ", sdep
        write(*,*)"Reference velocity file                : ", trim(vel_file)
        write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
        write(*,*)"Min./Max. # of interfaces              : ", k_min, k_max
        write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
-       write(*,*)"Min./Max. of Vs prior                  : ", vs_min, vs_max
-       write(*,*)"Min./Max. of Vp prior                  : ", vp_min, vp_max
+       write(*,*)"Min./Max. of dVs prior                 : ", dvs_min, dvs_max
+       write(*,*)"Min./Max. of dVp prior                 : ", dvp_min, dvp_max
        write(*,*)"Min./Max. of noise sigma prior         : ", sig_min, sig_max
-       write(*,*)"Standard deviation for Vs prior        : ", dev_vs_prior
-       write(*,*)"Standard deviation for Vp prior        : ", dev_vp_prior
        write(*,*)"Standard deviation for depth proposal  : ", dev_z
-       write(*,*)"Standard deviation for Vs proposal     : ", dev_vs
-       write(*,*)"Standard deviation for Vp proposal     : ", dev_vp
+       write(*,*)"Standard deviation for dVs proposal    : ", dev_dvs
+       write(*,*)"Standard deviation for dVp proposal    : ", dev_dvp
        write(*,*)"Standard deviation for sigma proposal  : ", dev_sig
        write(*,*)"# of bins for depth                    : ", nbin_z
-       write(*,*)"# of bins for Vs                       : ", nbin_vs
-       write(*,*)"# of bins for Vp                       : ", nbin_vp
+       write(*,*)"# of bins for dVs                      : ", nbin_dvs
+       write(*,*)"# of bins for dVp                      : ", nbin_dvp
        write(*,*)"# of bins for noise sigma              : ", nbin_sig
        
        write(*,*)"# of bins for amplitudes               : ", nbin_amp

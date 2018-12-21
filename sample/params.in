@@ -5,9 +5,9 @@
 # Iteration number per sample
 200
 # Number of chains per processor
-10
+1
 # Number of non-tempered chains per processor
-2
+1
 # Highest temperature
 100.d0
 # Random number seed
@@ -18,6 +18,8 @@
 0.06
 # Gaussian parameter
 8.0
+# Sample number used in FFT
+1024
 # Observed RF file
 151207.075005.95.r.mean
 # Start/End time
@@ -32,21 +34,17 @@ ref_vel
 1 101
 # Min./Max. of interface depth
 4.4 40.0
-# Min./Max. of Vs
-0.1   5.0
-# Min./Max. of Vp
-1.5   8.5
+# Min./Max. of dVs
+-0.6 0.6
+# Min./Max. of dVp
+-0.6 0.6
 # Min./Max. of noise sigma
 0.01 0.1
-# standard deviation for Vs prior
-0.5
-# standard deviation for Vp prior
-0.86
 # standard deviation for depth proposal
 1.0
-# standard deviation for Vs proposal
+# standard deviation for dVs proposal
 0.1
-# standard deviation for Vp proposal
+# standard deviation for dVp proposal
 0.1
 # standard deviation for noise sigma
 0.05

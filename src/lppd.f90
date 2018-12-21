@@ -2,34 +2,87 @@
 module lppd
   implicit none 
   real(8), allocatable :: r_inv(:,:,:)
-  real(8), allocatable :: sig(:)
+  real(8), allocatable :: sig(:,:)
+  real(8), allocatable :: log_fac(:)
   
 contains
   !=====================================================================
 
   subroutine init_sig(verb)
-    use params
+    use params, only: sig_min, sig_max, nchains, ntrc, k_max
     use mt19937
     implicit none 
     logical, intent(in) :: verb
-    integer :: ichain
+    integer :: ichain, itrc, i
+    real(8) :: tmp
     
-    allocate(sig(nchains))
+    allocate(sig(ntrc, nchains))
+    allocate(log_fac(k_max))
 
     do ichain = 1, nchains
-       sig(ichain) = sig_min + grnd() * (sig_max - sig_min)
+       do itrc = 1, ntrc
+          sig(itrc, ichain) = sig_min + grnd() * (sig_max - sig_min)
+       end do
+    end do
+    
+    tmp = 0.d0
+    do i = 1, k_max
+       tmp = tmp + log(dble(i))
+       log_fac(i) = tmp
     end do
     
     if (verb) then
+       write(*,*)
        write(*,*)"--- Initialize noise sigma ---"
+       write(*,*)"  sample output"
        do ichain = 1, nchains
-          write(*,*)ichain, sig(ichain)
+          write(*,*)ichain, sig(1, ichain)
        end do
     end if
 
     return 
   end subroutine init_sig
 
+
+  !=====================================================================
+
+  subroutine calc_log(ichain, lppd)
+    use params
+    use model
+    implicit none
+    integer, intent(in) :: ichain
+    real(8), intent(out) :: lppd
+    integer :: itrc, nlay, ki 
+    real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
+    real(8) :: misfits(nsmp), phi1(nsmp), phi, s
+    real(8), parameter :: pi = 3.1415926535897931
+    
+    call format_model(ichain, nlay, alpha, beta, rho, h)
+    ki = k(ichain)
+    
+
+    lppd = 0.d0
+    do itrc = 1, ntrc
+       s = sig(itrc, ichain)
+    
+       ! forward modeling
+       misfits(1:nsmp) = 0.d0
+
+       ! Likelihood
+       phi1 = matmul(misfits,r_inv(:,:,itrc))
+       phi = dot_product(phi1,misfits)
+       lppd = lppd - 0.5d0 * phi / (s * s) - dble(nsmp) * log(s)
+       
+       ! Prior
+       
+
+    end do
+    
+
+    return 
+  end subroutine calc_log
+
+  
   !=====================================================================
 
     

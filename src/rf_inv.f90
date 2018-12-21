@@ -42,7 +42,7 @@ program main
   call read_ref_model(verb)
 
   ! Generate initial model
-  call init_model()
+  call init_model(verb)
 
   ! Initialize noise sigma
   call init_sig(verb)

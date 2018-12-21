@@ -1,33 +1,58 @@
 module model
   use params
   use mt19937
+  use sort
   implicit none 
   integer, allocatable :: k(:)
-  real(8), allocatable :: vp(:,:), vs(:,:), z(:,:)
+  real(8), allocatable :: dvp(:,:), dvs(:,:), z(:,:)
   real(8), allocatable :: vp_ref(:), vs_ref(:)
   real(8) :: dz_ref, z_ref_min, z_ref_max
   
 contains
   !=====================================================================
   ! generate initial model randomly 
-  subroutine init_model()
+  subroutine init_model(verb)
     implicit none 
+    logical, intent(in) :: verb
     integer :: i, ichain
+    integer :: nlay
+    real(8) :: alpha(nlay_max), beta(nlay_max)
+    real(8) :: h(nlay_max), rho(nlay_max)
     
-    allocate(z(k_max-1, nchains), vp(k_max, nchains), vs(k_max, nchains))
+    allocate(z(k_max-1, nchains), dvp(k_max, nchains), dvs(k_max, nchains))
     allocate(k(nchains))
     
     do ichain = 1, nchains
        k(ichain) = k_min + int(grnd() * (k_max - k_min))
        
        do i = 1, k(ichain)
-          z(i, ichain) = z_min + int(grnd() * (z_max - z_min))
+          z(i, ichain) = z_min + grnd() * (z_max - z_min)
        end do
        
        do i = 1, k(ichain) + 1
-          vs(i, ichain) = vs_min + grnd() * (vs_max - vs_min)
-          vp(i, ichain) = vp_min + grnd() * (vp_max - vp_min)
+          dvs(i, ichain) = dvs_min + grnd() * (dvs_max - dvs_min)
+          dvp(i, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
        end do
+       
+       if (verb .and. ichain == 1) then
+          write(*,*)
+          write(*,*)"--- Initial model parameter ---"
+          write(*,*)" # of layer interfaces: ", k(ichain)
+          do i = 1, k(ichain)
+             write(*,*)z(i, ichain), dvp(i, ichain), dvs(i, ichain)
+          end do
+          write(*,*)"half space", dvp(k(ichain) + 1, ichain), &
+               & dvs(k(ichain) + 1, ichain)
+
+          call format_model(ichain, nlay, alpha, beta, rho, h)
+          write(*,*)
+          write(*,*)"--- Initial velocity model ---"
+          do i = 1, nlay
+             write(*,*)alpha(i), beta(i), rho(i), h(i)
+          end do
+
+       end if
+
     end do
     
     return 
@@ -99,45 +124,74 @@ contains
   
   !=====================================================================
   
-  subroutine format_model(ichain, nlay, alpha, beta, h, rho)
+  subroutine format_model(ichain, nlay, alpha, beta, rho, h)
     implicit none 
     integer, intent(in) :: ichain
     integer, intent(out) :: nlay
     real(8), intent(out) :: alpha(nlay_max), beta(nlay_max)
     real(8), intent(out) :: h(nlay_max), rho(nlay_max)
-    integer :: i, j
+    real(8) :: zc
+    integer :: i, j, ki, iz
     
-    i = 0
 
+    i = 0
+    ki = k(ichain)
+
+    call quick_sort(z(1:ki, ichain), 1, ki, &
+         & dvp(1:ki, ichain), dvs(1:ki, ichain))
+        
     ! Ocean
     if (sdep > 0.d0) then
        i = i + 1
-       nlay   = k(ichain) + 2
        alpha(i)  = 1.5d0
        beta(i)  = -999.d0
        rho(i) = 1.d0
        h(i)   = sdep
     end if
 
-    ! Finite layer
-    do j = 1, k(ichain)
+    ! Top layer
+    i = i + 1
+    zc = 0.5d0 * (sdep + z(1, ichain))
+    iz = nint((zc - z_ref_min) / dz_ref) + 1
+    beta(i) = vs_ref(iz) + dvs(1, ichain)
+    if (vp_mode == 1) then
+       alpha(i) = vp_ref(iz) + dvp(1, ichain)
+    else
+       alpha(i) = vp_ref(iz)
+    end if
+    rho(i) = vp_to_rho(alpha(i))
+    h(i)   = z(1, ichain) - sdep
+
+    ! Middle layer
+    do j = 2, ki
        i = i + 1
-       beta(i) = vs(j, ichain)
+       
+       zc = 0.5d0 * (z(j, ichain) + z(j-1, ichain))
+       iz = nint((zc - z_ref_min) / dz_ref) + 1
+
+       beta(i) = vs_ref(iz) + dvs(j, ichain)
+       
        if (vp_mode == 1) then
-          alpha(i) = vp(j, ichain)
+          alpha(i) = vp_ref(iz) + dvp(j, ichain)
        else
+          alpha(i) = vp_ref(iz)
        end if
        rho(i) = vp_to_rho(alpha(i))
-       h(i)   = z(j+1, ichain) - z(j, ichain)
+       h(i)   = z(j, ichain) - z(j-1, ichain)
+
     end do
 
     ! Half space
     i = i + 1
-    beta(i) = vs(k(ichain) + 1, ichain)
-    if (vp_mode == 1) then
-       alpha(i) = vp(j, ichain)
-    else
+    
+    zc = 0.5d0 * (z_max + z(ki, ichain))
+    iz = nint((zc - z_ref_min) / dz_ref) + 1
 
+    beta(i) = vs_ref(iz) + dvs(ki + 1, ichain)
+    if (vp_mode == 1) then
+       alpha(i) = vp_ref(iz) + dvp(ki + 1, ichain)
+    else
+       alpha(i) = vp_ref(iz)
     end if
     rho(i) = vp_to_rho(alpha(i))
     h(i)   = 999.d0
@@ -145,7 +199,8 @@ contains
     ! Total number of layers (including ocean and half-space)
     nlay = i
     
-    return
+
+    return 
   end subroutine format_model
   
   !=====================================================================
