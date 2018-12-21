@@ -4,6 +4,7 @@ program main
   use fftw
   use model
   use lppd
+  use forward
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -49,6 +50,9 @@ program main
   
   ! Calculate covariacne matrix
   call calc_r_inv(verb)
+
+  ! Make Gaussian low-pass filter
+  call init_filter()
 
   !============================================================
   ! MCMC
