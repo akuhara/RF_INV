@@ -12,16 +12,19 @@ contains
   !=====================================================================
   ! generate initial model randomly 
   subroutine init_model(verb)
+    use forward
     implicit none 
     logical, intent(in) :: verb
     integer :: i, ichain
     integer :: nlay
     real(8) :: alpha(nlay_max), beta(nlay_max)
     real(8) :: h(nlay_max), rho(nlay_max)
+    real(8), allocatable  :: rft(:,:)
     
     allocate(z(k_max-1, nchains), dvp(k_max, nchains), dvs(k_max, nchains))
     allocate(k(nchains))
-    
+    allocate(rft(nfft, ntrc))
+
     do ichain = 1, nchains
        k(ichain) = k_min + int(grnd() * (k_max - k_min))
        
@@ -50,6 +53,11 @@ contains
           do i = 1, nlay
              write(*,*)alpha(i), beta(i), rho(i), h(i)
           end do
+
+          call fwd_rf(nlay, nfft, ntrc, rayps, &
+               & alpha(1:nlay), beta(1:nlay), rho(1:nlay), &
+               & h(1:nlay), rft)
+          
 
        end if
 

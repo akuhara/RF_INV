@@ -5,6 +5,7 @@ program main
   use model
   use lppd
   use forward
+  use pt_mcmc
   implicit none 
   include "mpif.h"
   integer :: nproc, rank, ierr
@@ -38,6 +39,9 @@ program main
 
   ! Initialize FFTW
   call init_fftw()
+
+  ! Make Gaussian low-pass filter
+  call init_filter()
   
   ! Read reference velocity model
   call read_ref_model(verb)
@@ -51,13 +55,15 @@ program main
   ! Calculate covariacne matrix
   call calc_r_inv(verb)
 
-  ! Make Gaussian low-pass filter
-  call init_filter()
+  ! Initialize temperature
+  call init_pt_mcmc(verb)
 
   !============================================================
   ! MCMC
   !============================================================  
 
+  !call pt_control(verb)
+  call pt_control(verb)
 
   ! Finish
   call mpi_finalize(ierr)

@@ -5,9 +5,9 @@
 # Iteration number per sample
 200
 # Number of chains per processor
-1
+10
 # Number of non-tempered chains per processor
-1
+2
 # Highest temperature
 100.d0
 # Random number seed
@@ -31,7 +31,7 @@ ref_vel
 # Vp mode (0: Fixed, 1: solved)
 1
 # Min./Max. # of interfaces
-1 101
+1 10
 # Min./Max. of interface depth
 4.4 40.0
 # Min./Max. of dVs

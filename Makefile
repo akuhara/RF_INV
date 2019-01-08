@@ -11,7 +11,8 @@ LAPACK = -llapack -lblas
 BINDIR  = ./bin
 TARGET = $(BINDIR)/rf_inv
 OBJS   = src/rf_inv.o src/params.o src/mt19937.o src/read_obs.o \
-         src/fftw.o src/model.o src/sort.o src/lppd.o src/forward.o
+         src/fftw.o src/model.o src/sort.o src/lppd.o src/forward.o \
+         src/pt_mcmc.o
 
 
 all: $(TARGET)
@@ -21,12 +22,13 @@ $(TARGET): $(OBJS)
 	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
 
 src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod lppd.mod \
-              forward.mod
+              forward.mod pt_mcmc.mod
 src/read_obs.o: params.mod
 src/fftw.o: params.mod
-src/model.o: params.mod mt19937.mod sort.mod
+src/model.o: params.mod mt19937.mod sort.mod forward.mod
 src/lppd.o: params.mod model.mod
-src/forward.o: params.mod
+src/forward.o: params.mod fftw.mod
+src/pt_mcmc.o: params.mod mt19937.mod model.mod lppd.mod
 
 clean:
 	rm -f *.mod bin/inv_PT_RF src/*.o *.o
