@@ -3,7 +3,7 @@ program main
   use mt19937
   use fftw
   use model
-  use lppd
+  use likelihood
   use forward
   use pt_mcmc
   implicit none 

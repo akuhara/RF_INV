@@ -2,7 +2,7 @@ module pt_mcmc
   use params
   use mt19937
   implicit none 
-  real(8), allocatable :: logPPD(:)
+  real(8), allocatable :: log_lklh(:)
 
 contains
   
@@ -35,7 +35,7 @@ contains
        end do
     end if
     
-    allocate(logPPD(nchains))
+    allocate(log_lklh(nchains))
     
     return 
   end subroutine init_pt_mcmc
@@ -64,7 +64,7 @@ contains
           do ichain = 1, nchains
              temp = temps(ichain)
              call mcmc(ichain, temp, e)
-             logPPD(ichain) = e
+             log_lklh(ichain) = e
           end do
           
           ! Be informed which chains are swapped
@@ -79,8 +79,8 @@ contains
              ! Swap within the single processor
              temp1 = temps(ichain1)
              temp2 = temps(ichain2)
-             e1    = logPPD(ichain1)
-             e2    = logPPD(ichain2)
+             e1    = log_lklh(ichain1)
+             e2    = log_lklh(ichain2)
              call judge_pt(temp1, temp2, e1, e2, yn)
              if (yn) then
                 temps(ichain2) = temp1
@@ -92,7 +92,7 @@ contains
                   & MPI_COMM_WORLD, status, ierr)
              temp1 = temps(ichain1)
              temp2 = rpack(1)
-             e1 = logPPD(ichain1)
+             e1 = log_lklh(ichain1)
              e2 = rpack(2)
              call judge_pt(temp1, temp2, e1, e2, yn)
              if (yn) then
@@ -104,7 +104,7 @@ contains
           else
              ! Send status to the other chain and receive result
              rpack(1) = temps(ichain2)
-             rpack(2) = logPPD(ichain2)
+             rpack(2) = log_lklh(ichain2)
              call mpi_send(rpack, 2, MPI_REAL8, rank1, 2018, &
                   & MPI_COMM_WORLD, status, ierr)
              call mpi_recv(rpack, 1, MPI_REAL8, rank1, 1988, &
@@ -138,14 +138,14 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine judge_pt(temp1, temp2, lp1, lp2, yn)
+  subroutine judge_pt(temp1, temp2, l1, l2, yn)
     use mt19937
     implicit none 
-    real(kind(0d0)), intent(in) :: temp1, temp2, lp1, lp2
+    real(kind(0d0)), intent(in) :: temp1, temp2, l1, l2
     logical, intent(out) :: yn
     real(kind(0d0)) :: del_s
     
-    del_s = (lp2 - lp1) * (1.d0 / temp1 - 1.d0 / temp2)
+    del_s = (l2 - l1) * (1.d0 / temp1 - 1.d0 / temp2)
     yn = .false.
     
     if(log(grnd()) <= del_s) then
@@ -157,20 +157,19 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc(ichain, temp, e)
+  subroutine mcmc(ichain, temp, out_log_lklh)
     use model
-    use lppd
+    use likelihood
     implicit none 
     integer, intent(in) :: ichain
     real(8), intent(in) :: temp
-    real(8), intent(out) :: e
+    real(8), intent(out) :: out_log_lklh
     real(8) :: prop_dvp(k_max), prop_dvs(k_max), prop_z(k_max)
-    real(8) :: prop_sig(ntrc)
+    real(8) :: prop_sig(ntrc), prop_log_lklh
     integer :: prop_k
-    integer :: itype, itarget
-    logical :: null_flag
-
-    e = logPPD(ichain)
+    integer :: itype, itarget, ilay
+    logical :: null_flag, yn
+    
     prop_k = k(ichain)
     prop_dvp(1:k_max) = dvp(1:k_max, ichain)
     prop_dvs(1:k_max) = dvs(1:k_max, ichain)
@@ -196,21 +195,109 @@ contains
        ! Death proposal
        prop_k = prop_k - 1
        if (prop_k >= k_min) then
-          
+          itarget = int(grnd() * (prop_k + 1)) + 1
+          do ilay = itarget, prop_k
+             prop_dvp(ilay) = dvp(ilay + 1, ichain)
+             prop_dvs(ilay) = dvs(ilay + 1, ichain)
+             prop_z(ilay)   = z(ilay + 1, ichain)
+          end do
+          prop_dvp(prop_k + 1) = 0.d0
+          prop_dvs(prop_k + 1) = 0.d0
+          prop_z(prop_k + 1)   = 0.d0
        else
           null_flag = .true.
        end if
     else if (itype == 2) then
        ! Move interface
+       itarget = int(grnd() * prop_k) + 1
+       prop_z(itarget) = prop_z(itarget) + gauss() * dev_z
+       if (prop_z(itarget) < z_min .or. &
+            & prop_z(itarget) > z_max) then
+          null_flag = .true.
+       end if
     else if (itype == 3) then
        ! Perturb dVp
+       itarget = int(grnd() * (prop_k + 1)) + 1
+       prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
+       if (prop_dvp(itarget) < dvp_min .or. &
+            & prop_dvp(itarget) > dvp_max) then
+          null_flag = .true.
+       end if
     else if (itype == 4) then
        ! Perturb dVs
+       itarget = int(grnd() * (prop_k + 1)) + 1
+       prop_dvs(itarget) = prop_dvs(itarget) + gauss() * dev_dvs
+       if (prop_dvs(itarget) < dvs_min .or. &
+            & prop_dvs(itarget) > dvs_max) then
+          null_flag = .true.
+       end if
     else 
        ! Perturb noise sigma
+       itarget = int(grnd() * ntrc) + 1
+       prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
+       if (prop_sig(itarget) < sig_min .or. &
+            & prop_sig(itarget) > sig_max) then
+          null_flag = .true.
+       end if
     end if
+    
+    
+    ! evaluate proposed model
+    if (.not. null_flag) then
+       call calc_log_lklh(ichain, out_log_lklh)
+       call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
+       if (yn) then
+          log_lklh(ichain) = out_log_lklh
+          k(ichain) = prop_k
+          dvp(1:k_max, ichain) = prop_dvp(1:k_max)
+          dvs(1:k_max, ichain) = prop_dvs(1:k_max)
+          z(1:k_max, ichain)   = prop_z(1:k_max)
+          sig(1:ntrc, ichain)  = prop_sig(1:ntrc)
+       else
+          out_log_lklh = log_lklh(ichain)
+       end if
+    else
+       out_log_lklh = log_lklh(ichain)
+    end if
+
     
     return 
   end subroutine mcmc
+
+  !---------------------------------------------------------------------
+  subroutine judge_mcmc(temp, log_lklh1, log_lklh2, yn)
+    use mt19937
+    implicit none
+    real(8), intent(in) :: temp, log_lklh1, log_lklh2
+    logical, intent(out) :: yn
+    real(8) :: del_s
+    
+    yn = .false.
+    del_s = (log_lklh2 - log_lklh1) / temp
+    
+    if (log(grnd()) <= del_s) then
+       yn = .true.
+    end if
+    
+    return 
+  end subroutine judge_mcmc
+  
+  !---------------------------------------------------------------------
+
+  real(8) function gauss()
+    use mt19937
+    implicit none 
+    real(8), parameter :: pi2 = 2.d0 * 3.1415926535897931d0
+    real(8) :: v1, v2
+    
+    v1 = grnd() 
+    v2 = grnd()
+    gauss = sqrt(-2.d0 * log(v1)) * cos(pi2 * v2)
+    
+    return 
+  end function gauss
+  
+  !---------------------------------------------------------------------
+
 
 end module pt_mcmc

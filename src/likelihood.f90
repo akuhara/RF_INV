@@ -3,7 +3,6 @@ module likelihood
   implicit none 
   real(8), allocatable :: r_inv(:,:,:)
   real(8), allocatable :: sig(:,:)
-  real(8), allocatable :: log_fac(:)
   
 contains
   !=====================================================================
@@ -46,12 +45,12 @@ contains
 
   !=====================================================================
 
-  subroutine calc_log(ichain, lppd)
+  subroutine calc_log_lklh(ichain, log_lklh)
     use params
     use model
     implicit none
     integer, intent(in) :: ichain
-    real(8), intent(out) :: lppd
+    real(8), intent(out) :: log_lklh
     integer :: itrc, nlay, ki 
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     real(8) :: misfits(nsmp), phi1(nsmp), phi, s
@@ -61,7 +60,7 @@ contains
     ki = k(ichain)
     
 
-    lppd = 0.d0
+    log_lklh = 0.d0
     do itrc = 1, ntrc
        s = sig(itrc, ichain)
     
@@ -71,16 +70,12 @@ contains
        ! Likelihood
        phi1 = matmul(misfits,r_inv(:,:,itrc))
        phi = dot_product(phi1,misfits)
-       lppd = lppd - 0.5d0 * phi / (s * s) - dble(nsmp) * log(s)
-       
-       ! Prior
-       
-
+       log_lklh = log_lklh - 0.5d0 * phi / (s * s) - dble(nsmp) * log(s)
     end do
     
 
     return 
-  end subroutine calc_log
+  end subroutine calc_log_lklh
 
   
   !=====================================================================
@@ -170,4 +165,4 @@ contains
   
   !=====================================================================
   
-end module lppd
+end module likelihood
