@@ -4,6 +4,7 @@ module params
   ! constant
   integer, parameter :: clen_max = 200
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
+  integer, parameter :: io_nk = 40
   integer, parameter :: npts_max = 2000, nlay_max = 200
   integer, parameter :: ntype = 6
   
@@ -46,8 +47,8 @@ module params
   real(8) :: dev_z, dev_dvs, dev_dvp, dev_sig
 
   ! output
-  integer :: nbin_z, nbin_dvs, nbin_dvp, nbin_amp, nbin_sig
-  real(8) :: amp_min, amp_max
+  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig
+  real(8) :: amp_min, amp_max, vp_min, vp_max, vs_min, vs_max
 
   !=====================================================================
   
@@ -151,10 +152,10 @@ contains
     read(line,*) nbin_z
     
     call get_line(io_param, line)
-    read(line,*) nbin_dvs
+    read(line,*) nbin_vs
     
     call get_line(io_param, line)
-    read(line,*) nbin_dvp
+    read(line,*) nbin_vp
 
     call get_line(io_param, line)
     read(line,*) nbin_sig
@@ -164,6 +165,12 @@ contains
 
     call get_line(io_param, line)
     read(line,*) amp_min, amp_max
+
+    call get_line(io_param, line)
+    read(line,*) vp_min, vp_max
+
+    call get_line(io_param, line)
+    read(line,*) vs_min, vs_max
 
     if (verb) then
        write(*,*)"--- Parameters --- "
@@ -203,13 +210,13 @@ contains
        write(*,*)"Standard deviation for dVp proposal    : ", dev_dvp
        write(*,*)"Standard deviation for sigma proposal  : ", dev_sig
        write(*,*)"# of bins for depth                    : ", nbin_z
-       write(*,*)"# of bins for dVs                      : ", nbin_dvs
-       write(*,*)"# of bins for dVp                      : ", nbin_dvp
+       write(*,*)"# of bins for Vs                       : ", nbin_vs
+       write(*,*)"# of bins for Vp                       : ", nbin_vp
        write(*,*)"# of bins for noise sigma              : ", nbin_sig
-       
        write(*,*)"# of bins for amplitudes               : ", nbin_amp
        write(*,*)"Min./Max. amplitudes to be displayed   : ", amp_min, amp_max
-       
+       write(*,*)"Min./Max. Vs to be displayed           : ", vs_min, vs_max
+       write(*,*)"Min./Max. Vp to be displayed           : ", vp_min, vp_max
     end if
     
 

@@ -1,9 +1,9 @@
 # Iteration number in burn-in period
-1000
+0
 # Iteration number after burn-in
 5000
 # Iteration number per sample
-200
+100
 # Number of chains per processor
 10
 # Number of non-tempered chains per processor
@@ -23,7 +23,7 @@
 # Observed RF file
 151207.075005.95.r.mean
 # Start/End time
--1.0 10.0
+0 10.0
 # Station depth (km)
 4.400
 # Reference velocity file
@@ -60,4 +60,7 @@ ref_vel
 100
 # Min./Max. amplitudes to be displayed
 -2.0 2.0
-
+# Min./Max. Vp to be displayed
+0.1 8.6
+# Min./Max. Vs to be displayed
+0.1 5.0

@@ -3,6 +3,10 @@ module pt_mcmc
   use mt19937
   implicit none 
   real(8), allocatable :: log_lklh(:)
+  integer :: nmod 
+  integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
+  integer, allocatable :: nvpz(:,:), nvsz(:,:)
+  real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
 contains
   
@@ -12,6 +16,37 @@ contains
     implicit none 
     logical, intent(in) :: verb
     integer :: ichain
+
+    !allocate
+    if (verb) then
+       write(*,*)
+       write(*,*) "--- Allocate memory for recording models ---"
+    end if
+    
+    allocate(log_lklh(nchains))
+    allocate(nk(k_max), nz(nbin_z), nsig(nbin_sig, ntrc))
+    allocate(namp(nbin_amp, nsmp, ntrc))
+    allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
+    
+    nk = 0
+    nz = 0
+    nsig = 0
+    namp = 0
+    nvpz = 0
+    nvsz = 0
+    
+    dbin_sig = (sig_max - sig_min) / nbin_sig
+    dbin_amp = (amp_max - amp_min) / nbin_amp
+    dbin_vp = (vp_max - vp_min) / nbin_vp
+    dbin_vs = (vs_max - vs_min) / nbin_vs
+    dbin_z = (z_max - 0.d0) / nbin_z
+    
+
+
+    if (verb) then
+       write(*,*) "  Done"
+    end if
+    
     
     if (verb) then
        write(*,*)
@@ -35,8 +70,6 @@ contains
        end do
     end if
     
-    allocate(log_lklh(nchains))
-    
     return 
   end subroutine init_pt_mcmc
   
@@ -52,69 +85,30 @@ contains
     integer :: itarget1, itarget2
     real(8) :: temp, e, temp1, temp2, e1, e2, rpack(2)
     logical :: yn
-    
+
     call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
     call mpi_comm_rank(MPI_COMM_WORLD, rank,  ierr)
+    
+
     n_all = (nproc - 1) * nchains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
+       if (rank == 1 .and. mod(it, ncorr) == 0) then
+          write(*,*)"Iteration #:", it, "/", n_tot_iter
+       end if
        ! Within-chain step for all chains
        if (rank > 0) then
           do ichain = 1, nchains
              temp = temps(ichain)
-             call mcmc(ichain, temp, e)
+             call mcmc(it, ichain, temp, e)
+             
              log_lklh(ichain) = e
           end do
-          
-          ! Be informed which chains are swapped
-          call mpi_bcast(ipack, 4, MPI_INTEGER4, 0, &
-               & MPI_COMM_WORLD, ierr)
-          rank1   = ipack(1)
-          rank2   = ipack(2)
-          ichain1 = ipack(3)
-          ichain2 = ipack(4)
-          
-          if (rank1 == rank .and. rank2 == rank) then
-             ! Swap within the single processor
-             temp1 = temps(ichain1)
-             temp2 = temps(ichain2)
-             e1    = log_lklh(ichain1)
-             e2    = log_lklh(ichain2)
-             call judge_pt(temp1, temp2, e1, e2, yn)
-             if (yn) then
-                temps(ichain2) = temp1
-                temps(ichain1) = temp2
-             end if
-          else if (rank1 == rank) then
-             ! Receive the other chain's status and judge
-             call mpi_recv(rpack, 2, MPI_REAL8, rank2, 2018, &
-                  & MPI_COMM_WORLD, status, ierr)
-             temp1 = temps(ichain1)
-             temp2 = rpack(1)
-             e1 = log_lklh(ichain1)
-             e2 = rpack(2)
-             call judge_pt(temp1, temp2, e1, e2, yn)
-             if (yn) then
-                temps(ichain1) = temp2
-                rpack(1) = temp1
-             end if
-             call mpi_send(rpack, 1, MPI_REAL8, rank2, 1988, &
-                  & MPI_COMM_WORLD, status, ierr)
-          else
-             ! Send status to the other chain and receive result
-             rpack(1) = temps(ichain2)
-             rpack(2) = log_lklh(ichain2)
-             call mpi_send(rpack, 2, MPI_REAL8, rank1, 2018, &
-                  & MPI_COMM_WORLD, status, ierr)
-             call mpi_recv(rpack, 1, MPI_REAL8, rank1, 1988, &
-                  & MPI_COMM_WORLD, status, ierr)
-             temps(ichain2) = rpack(1)
-          end if
-          
-       else
-          ! Job of zero-rank processor
-          ! - determine chain pair and inform it to all processors
+       end if
+
+       ! determine chain pair
+       if (rank == 0) then
           itarget1 = int(grnd() * n_all)
           do 
              itarget2 = int(grnd() * n_all)
@@ -128,12 +122,56 @@ contains
           ipack(1) = rank1
           ipack(2) = rank2
           ipack(3) = ichain1
-          ipack(4) = ichain2
-          call mpi_bcast(ipack, 4, MPI_INTEGER4, 0, &
-               & MPI_COMM_WORLD, ierr)
+          ipack(4) = ichain2  
+       end if
+       call mpi_bcast(ipack, 4, MPI_INTEGER4, 0, &
+            & MPI_COMM_WORLD, ierr)
+       
+       rank1   = ipack(1)
+       rank2   = ipack(2)
+       ichain1 = ipack(3)
+       ichain2 = ipack(4)
+       
+       if (rank1 == rank .and. rank2 == rank) then
+          ! Swap within the single processor
+          temp1 = temps(ichain1)
+          temp2 = temps(ichain2)
+          e1    = log_lklh(ichain1)
+          e2    = log_lklh(ichain2)
+          call judge_pt(temp1, temp2, e1, e2, yn)
+          if (yn) then
+             temps(ichain2) = temp1
+             temps(ichain1) = temp2
+          end if
+       else if (rank1 == rank) then
+          ! Receive the other chain's status and judge
+          call mpi_recv(rpack, 2, MPI_REAL8, rank2, 2018, &
+               & MPI_COMM_WORLD, status, ierr)
+          temp1 = temps(ichain1)
+          temp2 = rpack(1)
+          e1 = log_lklh(ichain1)
+          e2 = rpack(2)
+          call judge_pt(temp1, temp2, e1, e2, yn)
+          if (yn) then
+             temps(ichain1) = temp2
+             rpack(1) = temp1
+          end if
+          call mpi_send(rpack, 1, MPI_REAL8, rank2, 1988, &
+               & MPI_COMM_WORLD, status, ierr)
+       else if (rank2 == rank) then
+          ! Send status to the other chain and receive result
+          rpack(1) = temps(ichain2)
+          rpack(2) = log_lklh(ichain2)
+          call mpi_send(rpack, 2, MPI_REAL8, rank1, 2018, &
+               & MPI_COMM_WORLD, status, ierr)
+          call mpi_recv(rpack, 1, MPI_REAL8, rank1, 1988, &
+               & MPI_COMM_WORLD, status, ierr)
+          temps(ichain2) = rpack(1)
        end if
     end do
     
+       
+
   end subroutine pt_control
   
   !---------------------------------------------------------------------
@@ -157,24 +195,29 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc(ichain, temp, out_log_lklh)
+  subroutine mcmc(iter, ichain, temp, out_log_lklh)
     use model
     use likelihood
     implicit none 
-    integer, intent(in) :: ichain
+    integer, intent(in) :: iter, ichain
     real(8), intent(in) :: temp
     real(8), intent(out) :: out_log_lklh
     real(8) :: prop_dvp(k_max), prop_dvs(k_max), prop_z(k_max)
-    real(8) :: prop_sig(ntrc), prop_log_lklh
+    real(8) :: prop_sig(ntrc), tmpz
     integer :: prop_k
-    integer :: itype, itarget, ilay
+    integer :: itype, itarget, ilay, ibin, iz1, iz2, itrc, iz
+    integer :: ivp, ivs, it
     logical :: null_flag, yn
+    integer :: nlay
+    real(8) :: alpha(nlay_max), beta(nlay_max)
+    real(8) :: h(nlay_max), rho(nlay_max)
+    real(8) :: rft(nfft, ntrc)
     
     prop_k = k(ichain)
-    prop_dvp(1:k_max) = dvp(1:k_max, ichain)
-    prop_dvs(1:k_max) = dvs(1:k_max, ichain)
-    prop_z(1:k_max)   = z(1:k_max, ichain)
-    prop_sig(1:ntrc)  = sig(1:ntrc, ichain)
+    prop_dvp(1:k_max)   = dvp(1:k_max, ichain)
+    prop_dvs(1:k_max)   = dvs(1:k_max, ichain)
+    prop_z(1:k_max - 1) = z(1:k_max - 1, ichain)
+    prop_sig(1:ntrc)    = sig(1:ntrc, ichain)
 
     null_flag = .false.
 
@@ -244,20 +287,74 @@ contains
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       call calc_log_lklh(ichain, out_log_lklh)
+       call calc_log_lklh(ichain, out_log_lklh, rft)
        call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
        if (yn) then
-          log_lklh(ichain) = out_log_lklh
-          k(ichain) = prop_k
-          dvp(1:k_max, ichain) = prop_dvp(1:k_max)
-          dvs(1:k_max, ichain) = prop_dvs(1:k_max)
-          z(1:k_max, ichain)   = prop_z(1:k_max)
-          sig(1:ntrc, ichain)  = prop_sig(1:ntrc)
+          log_lklh(ichain)       = out_log_lklh
+          k(ichain)              = prop_k
+          dvp(1:k_max, ichain)   = prop_dvp(1:k_max)
+          dvs(1:k_max, ichain)   = prop_dvs(1:k_max)
+          z(1:k_max - 1, ichain) = prop_z(1:k_max - 1)
+          sig(1:ntrc, ichain)    = prop_sig(1:ntrc)
        else
           out_log_lklh = log_lklh(ichain)
        end if
     else
        out_log_lklh = log_lklh(ichain)
+    end if
+
+    ! record sampled model
+    if (temp <= 1.d0 + 1.0e-6 .and. iter > nburn .and. &
+         & mod(iter - nburn, ncorr) == 1) then
+
+       ! # of layer interfaces
+       nk(k(ichain)) = nk(k(ichain)) + 1
+       
+       ! Noise sigma
+       do itrc = 1, ntrc
+          ibin = int((sig(itrc, ichain) - sig_min) / dbin_sig) + 1
+          nsig(ibin, itrc) = nsig(ibin, itrc) + 1
+       end do
+
+       ! Interface depth
+       do ilay = 1, k(ichain) - 1
+          ibin = int((z(ilay, ichain) - z_min) / dbin_z) + 1
+          nz(ibin) = nz(ibin) + 1
+       end do
+
+
+       ! V-z profile
+       call format_model(ichain, nlay, alpha, beta, rho, h)
+       tmpz = 0.d0
+       do ilay = 1, nlay
+          iz1 = int(tmpz / dbin_z) + 1
+          if (ilay < nlay) then
+             iz2 = int((tmpz + h(ilay)) / dbin_z) + 1
+          else
+             iz2 = nbin_z + 1
+          end if
+          ivp = int((alpha(ilay) - vp_min) / dbin_vp) + 1
+          ivs = int((beta(ilay) - vs_min) / dbin_vs) + 1
+          ivs = max(1, ivs) ! for ocean layer where beta(1) < vs_min
+          do iz = iz1, iz2 - 1
+             nvpz(iz, ivp) = nvpz(iz, ivp) + 1
+             nvsz(iz, ivs) = nvsz(iz, ivs) + 1
+          end do
+          tmpz = tmpz + h(ilay)
+       end do
+
+       ! RF trace
+       do itrc = 1, ntrc
+          do it = 1, nsmp
+             ibin = int((rft(it, itrc) - amp_min) / dbin_amp) + 1
+             if (ibin < 1 .or. ibin > nbin_amp) then
+                write(0,*)"ERROR: RF amp. out of range"
+                call mpi_finalize(ibin)
+                stop
+             end if
+             namp(ibin, it, itrc) = namp(ibin, it, itrc) + 1
+          end do
+       end do
     end if
 
     

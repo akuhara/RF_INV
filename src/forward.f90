@@ -27,7 +27,6 @@ contains
 
     nh = n / 2 + 1
     
-    
     do itrc = 1, ntrc
        call fwd_seis(nlay, n, rayps(itrc), 1, alpha, beta, rho, h, &
             & freq_r, freq_v)
@@ -94,9 +93,9 @@ contains
     integer :: i, nhalf
     logical :: sea_flag
     
-    do i = 1, nlay
-       write(*,*)alpha(i), beta(i), rho(i), h(i)
-    end do
+    !do i = 1, nlay
+    !   write(*,*)alpha(i), beta(i), rho(i), h(i)
+    !end do
 
     if (beta(1) < 0) then
        sea_flag = .true.

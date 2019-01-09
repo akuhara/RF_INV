@@ -1,6 +1,6 @@
 MF90 = mpif90
 #FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
-FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O -Wuninitialized \
+FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 
 
@@ -12,7 +12,7 @@ BINDIR  = ./bin
 TARGET = $(BINDIR)/rf_inv
 OBJS   = src/rf_inv.o src/params.o src/mt19937.o src/read_obs.o \
          src/fftw.o src/model.o src/sort.o src/likelihood.o src/forward.o \
-         src/pt_mcmc.o
+         src/pt_mcmc.o src/mcmc_out.o
 
 
 all: $(TARGET)
@@ -22,13 +22,14 @@ $(TARGET): $(OBJS)
 	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
 
 src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
-              forward.mod pt_mcmc.mod
+              forward.mod pt_mcmc.mod mcmc_out.mod
 src/read_obs.o: params.mod
 src/fftw.o: params.mod
 src/model.o: params.mod mt19937.mod sort.mod forward.mod
 src/likelihood.o: params.mod model.mod
 src/forward.o: params.mod fftw.mod
 src/pt_mcmc.o: params.mod mt19937.mod model.mod likelihood.mod
+src/mcmc_out.o: params.mod
 
 clean:
 	rm -f *.mod bin/inv_PT_RF src/*.o *.o

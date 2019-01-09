@@ -58,6 +58,7 @@ contains
                & alpha(1:nlay), beta(1:nlay), rho(1:nlay), &
                & h(1:nlay), rft)
           
+          
 
        end if
 
@@ -110,6 +111,21 @@ contains
     rewind(io_ref)
     do i = 1, nref
        read(io_ref,*) z_tmp, vp_ref(i), vs_ref(i)
+
+       ! Reference velocities are adjusted so that they can stay
+       ! within the given bounds
+       if (vp_ref(i) + dvp_min < vp_min) then
+          vp_ref(i) = vp_min - dvp_min
+       end if
+       if (vp_ref(i) + dvp_max > vp_max) then
+          vp_ref(i) = vp_max - dvp_max
+       end if
+       if (vs_ref(i) + dvs_min < vs_min) then
+          vs_ref(i) = vs_min - dvs_min
+       end if
+       if (vs_ref(i) + dvs_max > vs_max) then
+          vs_ref(i) = vs_max - dvs_max
+       end if
     end do
     close(io_ref)
     

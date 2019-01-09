@@ -16,18 +16,11 @@ contains
     real(8) :: tmp
     
     allocate(sig(ntrc, nchains))
-    allocate(log_fac(k_max))
 
     do ichain = 1, nchains
        do itrc = 1, ntrc
           sig(itrc, ichain) = sig_min + grnd() * (sig_max - sig_min)
        end do
-    end do
-    
-    tmp = 0.d0
-    do i = 1, k_max
-       tmp = tmp + log(dble(i))
-       log_fac(i) = tmp
     end do
     
     if (verb) then
@@ -45,32 +38,35 @@ contains
 
   !=====================================================================
 
-  subroutine calc_log_lklh(ichain, log_lklh)
+  subroutine calc_log_lklh(ichain, log_lklh, rft)
     use params
+    use forward
     use model
     implicit none
     integer, intent(in) :: ichain
     real(8), intent(out) :: log_lklh
-    integer :: itrc, nlay, ki 
+    real(8), intent(out) :: rft(nfft, ntrc)
+    integer :: itrc, nlay, ki , it
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     real(8) :: misfits(nsmp), phi1(nsmp), phi, s
     real(8), parameter :: pi = 3.1415926535897931
     
     call format_model(ichain, nlay, alpha, beta, rho, h)
+    
     ki = k(ichain)
-    
-
     log_lklh = 0.d0
-    do itrc = 1, ntrc
-       s = sig(itrc, ichain)
+    ! forward modeling
+    call fwd_rf(nlay, nfft, ntrc, rayps, alpha, beta, rho, h, rft)
     
-       ! forward modeling
-       misfits(1:nsmp) = 0.d0
-
+    do itrc = 1, ntrc
+       misfits(1:nsmp) = rft(1:nsmp,itrc) - obs(1:nsmp, itrc)
+       
        ! Likelihood
+       s = sig(itrc, ichain)
        phi1 = matmul(misfits,r_inv(:,:,itrc))
        phi = dot_product(phi1,misfits)
        log_lklh = log_lklh - 0.5d0 * phi / (s * s) - dble(nsmp) * log(s)
+
     end do
     
 
