@@ -4,7 +4,7 @@ module params
   ! constant
   integer, parameter :: clen_max = 200
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
-  integer, parameter :: io_nk = 40
+  integer, parameter :: io_nk = 40, io_syn = 50
   integer, parameter :: npts_max = 2000, nlay_max = 200
   integer, parameter :: ntype = 6
   

@@ -1,10 +1,10 @@
 module pt_mcmc
   use params
-  use mt19937
   implicit none 
   real(8), allocatable :: log_lklh(:)
   integer :: nmod 
   integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
+  integer :: nprop(ntype), naccept(ntype)
   integer, allocatable :: nvpz(:,:), nvsz(:,:)
   real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
@@ -13,8 +13,11 @@ contains
   !---------------------------------------------------------------------
   
   subroutine init_pt_mcmc(verb)
+    use model
+    use likelihood
     implicit none 
     logical, intent(in) :: verb
+    real(8) :: rft(nfft, ntrc)
     integer :: ichain
 
     !allocate
@@ -34,7 +37,10 @@ contains
     namp = 0
     nvpz = 0
     nvsz = 0
-    
+    nmod = 0
+    naccept = 0
+    nprop = 0
+
     dbin_sig = (sig_max - sig_min) / nbin_sig
     dbin_amp = (amp_max - amp_min) / nbin_amp
     dbin_vp = (vp_max - vp_min) / nbin_vp
@@ -70,12 +76,20 @@ contains
        end do
     end if
     
+    ! calculate inital log-likelihood
+    do ichain = 1, nchains
+       call calc_log_lklh(k(ichain), z(1:k_max-1,ichain), &
+            & dvp(1:k_max,ichain), dvs(1:k_max,ichain), &
+            & sig(1:ntrc,ichain), log_lklh(ichain), &
+            & rft)
+    end do
     return 
   end subroutine init_pt_mcmc
   
   !---------------------------------------------------------------------
 
   subroutine pt_control(verb)
+    use mt19937
     implicit none 
     include "mpif.h"
     logical, intent(in) :: verb
@@ -102,10 +116,10 @@ contains
           do ichain = 1, nchains
              temp = temps(ichain)
              call mcmc(it, ichain, temp, e)
-             
              log_lklh(ichain) = e
           end do
        end if
+       if (nchains < 2) cycle ! single-chain MCMC
 
        ! determine chain pair
        if (rank == 0) then
@@ -196,6 +210,7 @@ contains
   !---------------------------------------------------------------------
 
   subroutine mcmc(iter, ichain, temp, out_log_lklh)
+    use mt19937
     use model
     use likelihood
     implicit none 
@@ -222,9 +237,9 @@ contains
     null_flag = .false.
 
     ! Select proposal type
-    itype = int(grnd() * ntype)
+    itype = int(grnd() * ntype) + 1
 
-    if (itype == 0) then
+    if (itype == 1) then
        ! Birth proposal
        prop_k = prop_k + 1
        if (prop_k < k_max) then
@@ -234,7 +249,7 @@ contains
        else 
           null_flag = .true.
        end if
-    else if (itype == 1) then
+    else if (itype == 2) then
        ! Death proposal
        prop_k = prop_k - 1
        if (prop_k >= k_min) then
@@ -250,7 +265,7 @@ contains
        else
           null_flag = .true.
        end if
-    else if (itype == 2) then
+    else if (itype == 3) then
        ! Move interface
        itarget = int(grnd() * prop_k) + 1
        prop_z(itarget) = prop_z(itarget) + gauss() * dev_z
@@ -258,17 +273,19 @@ contains
             & prop_z(itarget) > z_max) then
           null_flag = .true.
        end if
-    else if (itype == 3) then
+    else if (itype == 4) then
        ! Perturb dVp
        itarget = int(grnd() * (prop_k + 1)) + 1
+       if (itarget == prop_k + 1) itarget = k_max
        prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
        if (prop_dvp(itarget) < dvp_min .or. &
             & prop_dvp(itarget) > dvp_max) then
           null_flag = .true.
        end if
-    else if (itype == 4) then
+    else if (itype == 5) then
        ! Perturb dVs
        itarget = int(grnd() * (prop_k + 1)) + 1
+       if (itarget == prop_k + 1) itarget = k_max
        prop_dvs(itarget) = prop_dvs(itarget) + gauss() * dev_dvs
        if (prop_dvs(itarget) < dvs_min .or. &
             & prop_dvs(itarget) > dvs_max) then
@@ -287,8 +304,10 @@ contains
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       call calc_log_lklh(ichain, out_log_lklh, rft)
+       call calc_log_lklh(prop_k, prop_z, prop_dvp, prop_dvs, &
+            & prop_sig, out_log_lklh, rft)
        call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
+       write(*,*)yn, log_lklh(ichain), "->", out_log_lklh, itype
        if (yn) then
           log_lklh(ichain)       = out_log_lklh
           k(ichain)              = prop_k
@@ -301,11 +320,21 @@ contains
        end if
     else
        out_log_lklh = log_lklh(ichain)
+       write(*,*)"null proposal"
+    end if
+
+    
+    ! count proposal
+    if (temp <= 1.d0 + 1.0e-6) then
+       nprop(itype) = nprop(itype) + 1
+       if (yn) naccept(itype) = naccept(itype) + 1
     end if
 
     ! record sampled model
     if (temp <= 1.d0 + 1.0e-6 .and. iter > nburn .and. &
-         & mod(iter - nburn, ncorr) == 1) then
+         & mod(iter - nburn, ncorr) == 0) then
+       
+       nmod = nmod + 1
 
        ! # of layer interfaces
        nk(k(ichain)) = nk(k(ichain)) + 1
@@ -324,7 +353,9 @@ contains
 
 
        ! V-z profile
-       call format_model(ichain, nlay, alpha, beta, rho, h)
+       call format_model(k(ichain), z(1:k_max-1, ichain), &
+            & dvp(1:k_max, ichain), dvs(1:k_max, ichain), &
+            & nlay, alpha, beta, rho, h)
        tmpz = 0.d0
        do ilay = 1, nlay
           iz1 = int(tmpz / dbin_z) + 1

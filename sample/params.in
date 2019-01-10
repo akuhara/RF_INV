@@ -1,13 +1,13 @@
 # Iteration number in burn-in period
 0
 # Iteration number after burn-in
-5000
-# Iteration number per sample
 100
+# Iteration number per sample
+1
 # Number of chains per processor
-10
+1
 # Number of non-tempered chains per processor
-2
+1
 # Highest temperature
 100.d0
 # Random number seed
@@ -31,7 +31,7 @@ ref_vel
 # Vp mode (0: Fixed, 1: solved)
 1
 # Min./Max. # of interfaces
-1 10
+1 31
 # Min./Max. of interface depth
 4.4 40.0
 # Min./Max. of dVs
@@ -41,13 +41,13 @@ ref_vel
 # Min./Max. of noise sigma
 0.01 0.1
 # standard deviation for depth proposal
-1.0
+0.2
 # standard deviation for dVs proposal
-0.1
+0.02
 # standard deviation for dVp proposal
-0.1
+0.02
 # standard deviation for noise sigma
-0.05
+0.01
 # Number of bins for depth
 100
 # Number of bins for Vs

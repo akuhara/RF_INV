@@ -38,22 +38,26 @@ contains
 
   !=====================================================================
 
-  subroutine calc_log_lklh(ichain, log_lklh, rft)
+  subroutine calc_log_lklh(prop_k, prop_z, prop_dvp, prop_dvs, &
+       & sig, log_lklh, rft)
     use params
     use forward
     use model
     implicit none
-    integer, intent(in) :: ichain
+    integer, intent(in) :: prop_k
+    real(8), intent(in) :: prop_z(k_max-1), prop_dvp(k_max) 
+    real(8), intent(in) :: prop_dvs(k_max), sig(ntrc)
     real(8), intent(out) :: log_lklh
     real(8), intent(out) :: rft(nfft, ntrc)
-    integer :: itrc, nlay, ki , it
+    integer :: itrc, nlay, it, ichain
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     real(8) :: misfits(nsmp), phi1(nsmp), phi, s
     real(8), parameter :: pi = 3.1415926535897931
     
-    call format_model(ichain, nlay, alpha, beta, rho, h)
     
-    ki = k(ichain)
+    call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
+         & nlay, alpha, beta, rho, h)
+    
     log_lklh = 0.d0
     ! forward modeling
     call fwd_rf(nlay, nfft, ntrc, rayps, alpha, beta, rho, h, rft)
@@ -62,14 +66,14 @@ contains
        misfits(1:nsmp) = rft(1:nsmp,itrc) - obs(1:nsmp, itrc)
        
        ! Likelihood
-       s = sig(itrc, ichain)
+       s = sig(itrc)
        phi1 = matmul(misfits,r_inv(:,:,itrc))
        phi = dot_product(phi1,misfits)
        log_lklh = log_lklh - 0.5d0 * phi / (s * s) - dble(nsmp) * log(s)
 
     end do
     
-
+    write(*,*)log_lklh
     return 
   end subroutine calc_log_lklh
 

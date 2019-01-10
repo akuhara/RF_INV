@@ -223,12 +223,11 @@ contains
   !------------------------------------------------------------
   subroutine propagator_sol(omega, rho, alpha, beta, p, z, p_mat)
     implicit none
-    real(8) :: alpha, beta
+    real(8), intent(in) :: alpha, beta
     real(8), intent(in) :: omega, rho, p, z
     complex(kind(0d0)), intent(out) :: p_mat(4,4)
     real(8) :: eta,xi,beta2,p2,bp,cos_xi,cos_eta,sin_xi,sin_eta
     
-    p_mat(:,:) = (0.d0, 0.d0)
     beta2 = beta*beta
     p2 =p*p
     bp = 1.d0 -2.d0*beta2*p2
@@ -239,21 +238,38 @@ contains
     sin_xi = sin(omega*xi*z)
     sin_eta = sin(omega*eta*z)
     
+    !p_mat(1,1) = 2.d0*beta2*p2*cos_xi + bp*cos_eta
+    !p_mat(1,2) = p*( bp/xi*sin_xi - 2.d0*beta2*eta*sin_eta ) * ei
+    !p_mat(1,3) = (p2/xi*sin_xi + eta*sin_eta)/(omega*rho)
+    !p_mat(1,4) = p*(-cos_xi + cos_eta)/(omega*rho) * ei  
+    !p_mat(2,1) = p*( 2.d0*beta2*xi*sin_xi - bp/eta*sin_eta ) * ei
+    !p_mat(2,2) = bp*cos_xi + 2.d0*beta2*p2*cos_eta
+    !p_mat(2,3) = p_mat(1,4)
+    !p_mat(2,4) = (xi*sin_xi + p2/eta*sin_eta)/(omega*rho)
+    !p_mat(3,1) = omega*rho*( -4.d0*beta2*beta2*p2*xi*sin_xi - bp*bp/eta*sin_eta )
+    !p_mat(3,2) = 2.d0*omega*beta2*rho*p*bp*( cos_xi - cos_eta ) * ei
+    !p_mat(3,3) = p_mat(1,1)
+    !p_mat(3,4) = p_mat(2,1)
+    !p_mat(4,1) = p_mat(3,2)
+    !p_mat(4,2) = -omega*rho*( bp*bp/xi*sin_xi + 4.d0*beta2*beta2*p2*eta*sin_eta  )
+    !p_mat(4,3) = p_mat(1,2)  
+    !p_mat(4,4) = p_mat(2,2)
+
     p_mat(1,1) = 2.d0*beta2*p2*cos_xi + bp*cos_eta
-    p_mat(1,2) = p*( bp/xi*sin_xi - 2.d0*beta2*eta*sin_eta ) * ei
-    p_mat(1,3) = (p2/xi*sin_xi + eta*sin_eta)/(omega*rho)
-    p_mat(1,4) = p*(-cos_xi + cos_eta)/(omega*rho) * ei  
     p_mat(2,1) = p*( 2.d0*beta2*xi*sin_xi - bp/eta*sin_eta ) * ei
-    p_mat(2,2) = bp*cos_xi + 2.d0*beta2*p2*cos_eta
-    p_mat(2,3) = p_mat(1,4)
-    p_mat(2,4) = (xi*sin_xi + p2/eta*sin_eta)/(omega*rho)
     p_mat(3,1) = omega*rho*( -4.d0*beta2*beta2*p2*xi*sin_xi - bp*bp/eta*sin_eta )
-    p_mat(3,2) = 2.d0*omega*beta2*rho*p*bp*( cos_xi - cos_eta ) * ei
+    p_mat(4,1) = 2.d0*omega*beta2*rho*p*bp*( cos_xi - cos_eta ) * ei
+    p_mat(1,2) = p*( bp/xi*sin_xi - 2.d0*beta2*eta*sin_eta ) * ei
+    p_mat(2,2) = bp*cos_xi + 2.d0*beta2*p2*cos_eta
+    p_mat(3,2) = p_mat(4,1)
+    p_mat(4,2) = -omega*rho*( bp*bp/xi*sin_xi + 4.d0*beta2*beta2*p2*eta*sin_eta  )    
+    p_mat(1,3) = (p2/xi*sin_xi + eta*sin_eta)/(omega*rho)
+    p_mat(2,3) = p*(-cos_xi + cos_eta)/(omega*rho) * ei  
     p_mat(3,3) = p_mat(1,1)
-    p_mat(3,4) = p_mat(2,1)
-    p_mat(4,1) = p_mat(3,2)
-    p_mat(4,2) = -omega*rho*( bp*bp/xi*sin_xi + 4.d0*beta2*beta2*p2*eta*sin_eta  )
     p_mat(4,3) = p_mat(1,2)  
+    p_mat(1,4) = p_mat(2,3)
+    p_mat(2,4) = (xi*sin_xi + p2/eta*sin_eta)/(omega*rho)
+    p_mat(3,4) = p_mat(2,1)
     p_mat(4,4) = p_mat(2,2)
     
     return 

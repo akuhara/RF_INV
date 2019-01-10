@@ -25,6 +25,9 @@ contains
     allocate(k(nchains))
     allocate(rft(nfft, ntrc))
 
+    dvp = 0.d0
+    dvs = 0.d0
+    z   = 0.d0
     do ichain = 1, nchains
        k(ichain) = k_min + int(grnd() * (k_max - k_min))
        
@@ -32,35 +35,26 @@ contains
           z(i, ichain) = z_min + grnd() * (z_max - z_min)
        end do
        
-       do i = 1, k(ichain) + 1
+       do i = 1, k(ichain)
           dvs(i, ichain) = dvs_min + grnd() * (dvs_max - dvs_min)
           dvp(i, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
        end do
+       ! Bottom half-space
+       dvs(k_max, ichain) = dvs_min + grnd() * (dvs_max - dvs_min)
+       dvp(k_max, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
        
        if (verb .and. ichain == 1) then
-          write(*,*)
-          write(*,*)"--- Initial model parameter ---"
-          write(*,*)" # of layer interfaces: ", k(ichain)
-          do i = 1, k(ichain)
-             write(*,*)z(i, ichain), dvp(i, ichain), dvs(i, ichain)
-          end do
-          write(*,*)"half space", dvp(k(ichain) + 1, ichain), &
-               & dvs(k(ichain) + 1, ichain)
-
-          call format_model(ichain, nlay, alpha, beta, rho, h)
+          call format_model(k(ichain), z(1:k_max-1, ichain), &
+               & dvp(1:k_max, ichain), dvs(1:k_max, ichain), &
+               & nlay, alpha, beta, rho, h)
           write(*,*)
           write(*,*)"--- Initial velocity model ---"
           do i = 1, nlay
              write(*,*)alpha(i), beta(i), rho(i), h(i)
           end do
-
-          call fwd_rf(nlay, nfft, ntrc, rayps, &
-               & alpha(1:nlay), beta(1:nlay), rho(1:nlay), &
-               & h(1:nlay), rft)
-          
-          
-
        end if
+
+       
 
     end do
     
@@ -148,22 +142,28 @@ contains
   
   !=====================================================================
   
-  subroutine format_model(ichain, nlay, alpha, beta, rho, h)
+  subroutine format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
+       & nlay, alpha, beta, rho, h)
     implicit none 
-    integer, intent(in) :: ichain
+    integer, intent(in) :: prop_k
+    real(8), intent(in) :: prop_z(k_max-1), prop_dvp(k_max) 
+    real(8), intent(in) :: prop_dvs(k_max)
     integer, intent(out) :: nlay
     real(8), intent(out) :: alpha(nlay_max), beta(nlay_max)
     real(8), intent(out) :: h(nlay_max), rho(nlay_max)
     real(8) :: zc
+    real(8) :: tmp_z(k_max-1), tmp_dvp(k_max), tmp_dvs(k_max)
     integer :: i, j, ki, iz
+   
+
+    tmp_z = prop_z
+    tmp_dvs = prop_dvs
+    tmp_dvp = prop_dvp
     
+    call quick_sort(tmp_z(1:prop_k), 1, prop_k, &
+         & tmp_dvp(1:prop_k), tmp_dvs(1:prop_k))
 
     i = 0
-    ki = k(ichain)
-
-    call quick_sort(z(1:ki, ichain), 1, ki, &
-         & dvp(1:ki, ichain), dvs(1:ki, ichain))
-        
     ! Ocean
     if (sdep > 0.d0) then
        i = i + 1
@@ -175,45 +175,45 @@ contains
 
     ! Top layer
     i = i + 1
-    zc = 0.5d0 * (sdep + z(1, ichain))
+    zc = 0.5d0 * (sdep + tmp_z(1))
     iz = nint((zc - z_ref_min) / dz_ref) + 1
-    beta(i) = vs_ref(iz) + dvs(1, ichain)
+    beta(i) = vs_ref(iz) + tmp_dvs(1)
     if (vp_mode == 1) then
-       alpha(i) = vp_ref(iz) + dvp(1, ichain)
+       alpha(i) = vp_ref(iz) + tmp_dvp(1)
     else
        alpha(i) = vp_ref(iz)
     end if
     rho(i) = vp_to_rho(alpha(i))
-    h(i)   = z(1, ichain) - sdep
+    h(i)   = tmp_z(1) - sdep
 
     ! Middle layer
-    do j = 2, ki
+    do j = 2, prop_k
        i = i + 1
        
-       zc = 0.5d0 * (z(j, ichain) + z(j-1, ichain))
+       zc = 0.5d0 * (tmp_z(j) + tmp_z(j-1))
        iz = nint((zc - z_ref_min) / dz_ref) + 1
 
-       beta(i) = vs_ref(iz) + dvs(j, ichain)
+       beta(i) = vs_ref(iz) + tmp_dvs(j)
        
        if (vp_mode == 1) then
-          alpha(i) = vp_ref(iz) + dvp(j, ichain)
+          alpha(i) = vp_ref(iz) + tmp_dvp(j)
        else
           alpha(i) = vp_ref(iz)
        end if
        rho(i) = vp_to_rho(alpha(i))
-       h(i)   = z(j, ichain) - z(j-1, ichain)
+       h(i)   = tmp_z(j) - tmp_z(j-1)
 
     end do
 
     ! Half space
     i = i + 1
     
-    zc = 0.5d0 * (z_max + z(ki, ichain))
+    zc = 0.5d0 * (z_max + tmp_z(prop_k))
     iz = nint((zc - z_ref_min) / dz_ref) + 1
 
-    beta(i) = vs_ref(iz) + dvs(ki + 1, ichain)
+    beta(i) = vs_ref(iz) + tmp_dvs(k_max)
     if (vp_mode == 1) then
-       alpha(i) = vp_ref(iz) + dvp(ki + 1, ichain)
+       alpha(i) = vp_ref(iz) + tmp_dvp(k_max)
     else
        alpha(i) = vp_ref(iz)
     end if
