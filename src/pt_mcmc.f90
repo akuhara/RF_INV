@@ -307,7 +307,6 @@ contains
        call calc_log_lklh(prop_k, prop_z, prop_dvp, prop_dvs, &
             & prop_sig, out_log_lklh, rft)
        call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
-       write(*,*)yn, log_lklh(ichain), "->", out_log_lklh, itype
        if (yn) then
           log_lklh(ichain)       = out_log_lklh
           k(ichain)              = prop_k
@@ -320,7 +319,6 @@ contains
        end if
     else
        out_log_lklh = log_lklh(ichain)
-       write(*,*)"null proposal"
     end if
 
     

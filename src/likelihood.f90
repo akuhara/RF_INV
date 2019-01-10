@@ -73,7 +73,6 @@ contains
 
     end do
     
-    write(*,*)log_lklh
     return 
   end subroutine calc_log_lklh
 
