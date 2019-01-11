@@ -66,7 +66,7 @@ program main
 
    ! MCMC samping
    call pt_control(verb)
-
+   
    !output
    call output_results(rank, verb)
    

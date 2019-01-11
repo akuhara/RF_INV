@@ -7,7 +7,6 @@ module params
   integer, parameter :: io_nk = 40, io_syn = 50, io_vpz = 60
   integer, parameter :: io_vsz = 70, io_z = 80, io_sig = 90
   integer, parameter :: npts_max = 2000, nlay_max = 200
-  integer, parameter :: ntype = 6
   
   ! iteration
   integer :: nburn, niter, ncorr
@@ -37,6 +36,7 @@ module params
   
   ! inversion setting
   integer :: vp_mode
+  integer :: ntype
   
   ! prior
   integer :: k_min, k_max
@@ -121,6 +121,11 @@ contains
 
     call get_line(io_param, line)
     read(line,*) vp_mode
+    if (vp_mode == 1) then
+       ntype = 6
+    else
+       ntype = 5
+    end if
     
     call get_line(io_param, line)
     read(line,*) k_min, k_max

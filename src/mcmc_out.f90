@@ -48,13 +48,15 @@ contains
                & naccept_sum(2), "/", nprop_sum(2)
           write(*,*)"# of moving interface proposal:", &
                & naccept_sum(3), "/", nprop_sum(3)
-          write(*,*)"# of perturbing Vp proposal:", &
+          write(*,*)"# of perturbing noise sigma:", &
                & naccept_sum(4), "/", nprop_sum(4)
           write(*,*)"# of perturbing Vs proposal:", &
                & naccept_sum(5), "/", nprop_sum(5)
-          write(*,*)"# of perturbing noise sigma proposal:", &
-               & naccept_sum(6), "/", nprop_sum(6)
-          write(*,*)
+          if (vp_mode == 1) then
+             write(*,*)"# of perturbing Vp proposal:", &
+                  & naccept_sum(6), "/", nprop_sum(6)
+          end if
+             write(*,*)
        end if
        
        ! # of layer interfaces
@@ -82,7 +84,7 @@ contains
        do itrc = 1, ntrc
           do it = 1, nsmp
              do i = 1, nbin_amp
-                write(io_syn,*) (it-1) * delta + t_start, &
+                write(io_syn,'(3F10.5,I6)') (it-1) * delta + t_start, &
                      & amp_min + (i - 0.5d0) * dbin_amp, &
                      & dble(namp_sum(i, it, itrc)) / dble(nmod_sum), &
                      & itrc
@@ -100,7 +102,8 @@ contains
           stop
        end if
        do i = 1, nbin_z
-          write(io_z,*) (i - 0.5d0) * dbin_z, dble(nz_sum(i)) / dble(nmod_sum)
+          write(io_z,*) &
+               & (i - 0.5d0) * dbin_z, dble(nz_sum(i)) / dble(nmod_sum)
        end do
        close(io_z)
 
@@ -131,7 +134,8 @@ contains
        end if
        do iv = 1, nbin_vs
           do iz = 1, nbin_z
-             write(io_vsz,*) (iv - 0.5d0) * dbin_vs + vs_min, &
+             write(io_vsz,'(3F10.5)') &
+                  & (iv - 0.5d0) * dbin_vs + vs_min, &
                   & (iz - 0.5d0) * dbin_z, &
                   & dble(nvsz_sum(iz, iv)) / dble(nmod_sum)
           end do
@@ -148,7 +152,8 @@ contains
        end if
        do iv = 1, nbin_vp
           do iz = 1, nbin_z
-             write(io_vpz,*) (iv - 0.5d0) * dbin_vp + vp_min, &
+             write(io_vpz,'(3F10.5)') &
+                  & (iv - 0.5d0) * dbin_vp + vp_min, &
                   & (iz - 0.5d0) * dbin_z, &
                   & dble(nvpz_sum(iz, iv)) / dble(nmod_sum)
           end do

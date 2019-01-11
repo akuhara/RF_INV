@@ -4,7 +4,7 @@ module pt_mcmc
   real(8), allocatable :: log_lklh(:)
   integer :: nmod 
   integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
-  integer :: nprop(ntype), naccept(ntype)
+  integer, allocatable :: nprop(:), naccept(:)
   integer, allocatable :: nvpz(:,:), nvsz(:,:)
   real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
@@ -30,6 +30,7 @@ contains
     allocate(nk(k_max), nz(nbin_z), nsig(nbin_sig, ntrc))
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
+    allocate(nprop(ntype), naccept(ntype))
     
     nk = 0
     nz = 0
@@ -274,12 +275,11 @@ contains
           null_flag = .true.
        end if
     else if (itype == 4) then
-       ! Perturb dVp
-       itarget = int(grnd() * (prop_k + 1)) + 1
-       if (itarget == prop_k + 1) itarget = k_max
-       prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
-       if (prop_dvp(itarget) < dvp_min .or. &
-            & prop_dvp(itarget) > dvp_max) then
+       ! Perturb noise sigma
+       itarget = int(grnd() * ntrc) + 1
+       prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
+       if (prop_sig(itarget) < sig_min .or. &
+            & prop_sig(itarget) > sig_max) then
           null_flag = .true.
        end if
     else if (itype == 5) then
@@ -292,11 +292,12 @@ contains
           null_flag = .true.
        end if
     else 
-       ! Perturb noise sigma
-       itarget = int(grnd() * ntrc) + 1
-       prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
-       if (prop_sig(itarget) < sig_min .or. &
-            & prop_sig(itarget) > sig_max) then
+       ! Perturb dVp
+       itarget = int(grnd() * (prop_k + 1)) + 1
+       if (itarget == prop_k + 1) itarget = k_max
+       prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
+       if (prop_dvp(itarget) < dvp_min .or. &
+            & prop_dvp(itarget) > dvp_max) then
           null_flag = .true.
        end if
     end if
@@ -376,10 +377,12 @@ contains
        do itrc = 1, ntrc
           do it = 1, nsmp
              ibin = int((rft(it, itrc) - amp_min) / dbin_amp) + 1
-             if (ibin < 1 .or. ibin > nbin_amp) then
-                write(0,*)"ERROR: RF amp. out of range"
-                call mpi_finalize(ibin)
-                stop
+             if (ibin < 1) then
+                write(0,*)"Warning: RF amp. out of range"
+                ibin = 1
+             else if (ibin > nbin_amp) then
+                write(0,*)"Warning: RF amp. out of range"
+                ibin = nbin_amp
              end if
              namp(ibin, it, itrc) = namp(ibin, it, itrc) + 1
           end do

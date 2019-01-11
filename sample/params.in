@@ -1,9 +1,9 @@
 # Iteration number in burn-in period
-1000
+0
 # Iteration number after burn-in
-5000
+100
 # Iteration number per sample
-20
+1
 # Number of chains per processor
 10
 # Number of non-tempered chains per processor
@@ -21,23 +21,23 @@
 # Sample number used in FFT
 1024
 # Observed RF file
-151207.075005.95.r.mean
+uni.r.rft
 # Start/End time
 0 10.0
 # Station depth (km)
-4.400
+0.0
 # Reference velocity file
-ref_vel
+uni_vel
 # Vp mode (0: Fixed, 1: solved)
-1
+0
 # Min./Max. # of interfaces
-1 51
+1 11
 # Min./Max. of interface depth
 4.4 40.0
 # Min./Max. of dVs
--0.6 0.6
+-2.0 2.0
 # Min./Max. of dVp
--0.6 0.6
+-2.0 2.0
 # Min./Max. of noise sigma
 0.01 0.1
 # standard deviation for depth proposal
@@ -59,8 +59,8 @@ ref_vel
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--2.0 2.0
+-2.5 2.5
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed
-0.1 5.0
+0.001 5.0
