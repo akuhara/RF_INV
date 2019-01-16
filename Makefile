@@ -9,15 +9,22 @@ LAPACK = -llapack -lblas
 
 
 BINDIR  = ./bin
-TARGET = $(BINDIR)/rf_inv
-OBJS   = src/rf_inv.o src/params.o src/mt19937.o src/read_obs.o \
+TARGET1 = $(BINDIR)/rf_inv
+OBJS1   = src/rf_inv.o src/params.o src/mt19937.o src/read_obs.o \
          src/fftw.o src/model.o src/sort.o src/likelihood.o src/forward.o \
          src/pt_mcmc.o src/mcmc_out.o
+TARGET2 = $(BINDIR)/make_syn
+OBJS2   = src/make_syn.o
 
 
-all: $(TARGET)
 
-$(TARGET): $(OBJS)
+all: $(TARGET1) $(TARGET2)
+
+$(TARGET1): $(OBJS1)
+	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
+	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
+
+$(TARGET2): $(OBJS2)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
 
@@ -25,9 +32,9 @@ src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
               forward.mod pt_mcmc.mod mcmc_out.mod
 src/read_obs.o: params.mod
 src/fftw.o: params.mod
-src/model.o: params.mod mt19937.mod sort.mod forward.mod
-src/likelihood.o: params.mod model.mod
-src/forward.o: params.mod fftw.mod
+src/model.o: params.mod mt19937.mod sort.mod 
+src/likelihood.o: params.mod model.mod forward.mod
+src/forward.o: params.mod fftw.mod model.mod
 src/pt_mcmc.o: params.mod mt19937.mod model.mod likelihood.mod
 src/mcmc_out.o: params.mod
 
@@ -38,7 +45,7 @@ clean:
 #------------------------------------------------------------
 # Pattern rule
 #------------------------------------------------------------
-$(OBJS): %.o: %.f90
+%.o: %.f90
 	$(MF90) $(FFLAGS) -c $< $(FFTW) $(LAPACK) -o $*.o 
 %.mod: src/%.f90 src/%.o
 	@:

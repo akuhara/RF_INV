@@ -12,7 +12,7 @@ contains
   
   !=====================================================================
   subroutine init_fftw()
-    
+    write(*,*)"FFT", nfft
     allocate(cx(nfft), rx(nfft))
     call dfftw_plan_dft_c2r_1d(ifft, nfft, cx, rx, FFTW_ESTIMATE)
     

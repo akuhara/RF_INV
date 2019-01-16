@@ -50,7 +50,10 @@ program main
 
    ! Generate initial model
    call init_model(verb)
-
+   
+   ! Initialize propagator matrix
+   !call init_p_mat(verb)
+   
    ! Initialize noise sigma
    call init_sig(verb)
 

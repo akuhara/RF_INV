@@ -1,17 +1,17 @@
 # Iteration number in burn-in period
-0
+1000
 # Iteration number after burn-in
-100
+5000
 # Iteration number per sample
 1
 # Number of chains per processor
-10
+1
 # Number of non-tempered chains per processor
-2
+1
 # Highest temperature
-100.d0
+50.d0
 # Random number seed
-12345678
+24445678
 # Number of traces
 1
 # Ray parameter
@@ -19,7 +19,7 @@
 # Gaussian parameter
 8.0
 # Sample number used in FFT
-1024
+2048
 # Observed RF file
 uni.r.rft
 # Start/End time
@@ -31,9 +31,9 @@ uni_vel
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 11
+1 4
 # Min./Max. of interface depth
-4.4 40.0
+0.0 20.0
 # Min./Max. of dVs
 -2.0 2.0
 # Min./Max. of dVp
@@ -59,7 +59,7 @@ uni_vel
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--2.5 2.5
+-1.0 1.0
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed

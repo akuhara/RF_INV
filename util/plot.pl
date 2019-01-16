@@ -58,14 +58,14 @@ my $xlabel_syn = "Time after P (s)";
 my $ylabel_syn = "RF amp.";
 my $xshift_syn = "-$xshift_sig";
 my $yshift_syn = "-7c";
-#
+# Vs profile
 my $width_vs = "5c";
 my $hight_vs = "-9c";
 my $ymin_vs  = -1.2;
 my $ymax_vs  = 1.2;
 my $zmin_vs  = 0.0;
 my $zmax_vs  = 0.2;
-my $xtic_vs  = "2f1";
+my $xtic_vs  = "1f0.2";
 my $ytic_vs  = "10f5";
 my $xlabel_vs = "Vs (km/s)";
 my $ylabel_vs = "Depth (km)";

@@ -12,7 +12,6 @@ contains
   !=====================================================================
   ! generate initial model randomly 
   subroutine init_model(verb)
-    use forward
     implicit none 
     logical, intent(in) :: verb
     integer :: i, ichain
@@ -53,8 +52,6 @@ contains
              write(*,*)alpha(i), beta(i), rho(i), h(i)
           end do
        end if
-
-       
 
     end do
     

@@ -38,18 +38,18 @@ contains
 
   !=====================================================================
 
-  subroutine calc_log_lklh(prop_k, prop_z, prop_dvp, prop_dvs, &
+  subroutine calc_log_lklh(chain_id, prop_k, prop_z, prop_dvp, prop_dvs, &
        & sig, log_lklh, rft)
     use params
     use forward
     use model
     implicit none
-    integer, intent(in) :: prop_k
+    integer, intent(in) :: prop_k, chain_id
     real(8), intent(in) :: prop_z(k_max-1), prop_dvp(k_max) 
     real(8), intent(in) :: prop_dvs(k_max), sig(ntrc)
     real(8), intent(out) :: log_lklh
     real(8), intent(out) :: rft(nfft, ntrc)
-    integer :: itrc, nlay, it, ichain
+    integer :: itrc, nlay, it
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     real(8) :: misfits(nsmp), phi1(nsmp), phi, s
     real(8), parameter :: pi = 3.1415926535897931
@@ -60,7 +60,7 @@ contains
     
     log_lklh = 0.d0
     ! forward modeling
-    call fwd_rf(nlay, nfft, ntrc, rayps, alpha, beta, rho, h, rft)
+    call fwd_rf(chain_id, nlay, nfft, ntrc, rayps, alpha, beta, rho, h, rft)
     
     do itrc = 1, ntrc
        misfits(1:nsmp) = rft(1:nsmp,itrc) - obs(1:nsmp, itrc)

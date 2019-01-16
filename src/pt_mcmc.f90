@@ -79,7 +79,7 @@ contains
     
     ! calculate inital log-likelihood
     do ichain = 1, nchains
-       call calc_log_lklh(k(ichain), z(1:k_max-1,ichain), &
+       call calc_log_lklh(ichain, k(ichain), z(1:k_max-1,ichain), &
             & dvp(1:k_max,ichain), dvs(1:k_max,ichain), &
             & sig(1:ntrc,ichain), log_lklh(ichain), &
             & rft)
@@ -214,6 +214,7 @@ contains
     use mt19937
     use model
     use likelihood
+    use forward
     implicit none 
     integer, intent(in) :: iter, ichain
     real(8), intent(in) :: temp
@@ -305,7 +306,7 @@ contains
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       call calc_log_lklh(prop_k, prop_z, prop_dvp, prop_dvs, &
+       call calc_log_lklh(ichain, prop_k, prop_z, prop_dvp, prop_dvs, &
             & prop_sig, out_log_lklh, rft)
        call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
        if (yn) then
