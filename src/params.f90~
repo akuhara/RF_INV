@@ -1,0 +1,616 @@
+
+module params
+  implicit none 
+
+  ! Primary parameters read from user input file (params.in)
+  character(100) :: vel_ref_file
+  character(100), allocatable :: datafile(:), &
+       & sdvfile(:), acffile(:)
+  real(8) :: t_file_start, t_win_start, t_win_end, delta
+  real(8) :: rayp
+  real(8), allocatable :: a_gus(:)
+  real(8) :: zmin, zmax, vmin, vmax, vpvsmin, vpvsmax
+  real(8) :: sed_vsmin, sed_vsmax, sed_vpmin, sed_vpmax
+  real(8) :: sed_hmin, sed_hmax
+  real(8) :: sigmin, sigmax
+  real(8) :: sdv_z, sdv_v, sdv_vpvs, sdv_sig 
+  real(8) :: vp_base, vs_base
+  real(8) :: sdep
+  real(8) :: vbinmin, vbinmax, abinmin, abinmax
+  real(8) :: Thigh
+  integer :: ntrc
+  integer :: kmin, kmax, n_zbin
+  integer :: n_vbin, n_vpvsbin, n_sigbin, n_abin
+  integer :: nsteps, iburn, nskip
+  integer :: vpvs_flag, sed_flag, base_flag
+  integer :: nchains, ncool, iseed, iseed0
+
+  ! Reference velocity model
+  real(8), allocatable :: vs_ref(:), vp_ref(:)
+  
+  ! Observed RF
+  real(8), allocatable :: d_obs(:,:)
+  real(8), allocatable :: acf(:,:), sdv(:,:)
+
+  ! Covariance matrix
+  real(8), allocatable :: r_inv(:,:,:)
+
+  
+  
+  ! Secondary parameters calculated from the primary parameters
+  real(8) :: del_k, del_v, del_vpvs, del_z
+  real(8) :: del_sig
+  real(8) :: del_vbin, del_abin, del_zbin, del_vpvsbin, del_sigbin
+  real(8) :: del_sedvs, del_sedvp, del_sedh
+  integer :: nfft, i_win_start, i_win_end, n_smp
+  integer :: n_vel_ref, npara
+  real(8) :: dz_vel_ref
+  real(8), allocatable :: r(:)
+  integer :: ntype, itype_vs, itype_z, itype_sig
+  integer :: itype_vpvs, itype_death, itype_birth
+  integer :: itype_sedvs, itype_sedvp, itype_sedh
+  
+  ! Mathematical constant
+  real(8), parameter :: pi  = acos(-1.d0)
+  real(8), parameter :: pi2 = pi * 2.d0
+  complex(kind(0d0)), parameter :: ei = (0.d0, 1.d0)
+  
+end module params
+
+!------------------------------------------------------------
+
+subroutine calc_rinv()
+  use params
+  implicit none 
+  
+  integer :: i, j, itmax, ios, flag, itrc
+  real :: r_mat(n_smp,n_smp), tmpr
+  real :: tol, w(n_smp),rv(n_smp),v(n_smp,n_smp), diag(n_smp,n_smp), org(n_smp,n_smp)
+  real :: dum1, dum2, dum3
+  real :: eps_r
+  
+  
+  ! some parameters used for SVD decomposition
+  tol = 1.0e-6
+  eps_r = 0.01
+  itmax = 1000000
+
+  allocate(r_inv(n_smp,n_smp,ntrc))
+  
+
+  do itrc = 1, ntrc
+     ! Set correlation matrix
+     r_mat = 0.0
+     do i = 1, n_smp
+        r_mat(i,i) = 1.d0
+     end do
+     do i = 1, n_smp - 1
+        tmpr = r(itrc) ** (i**2)
+        if (tmpr < eps_r) exit
+        do j = 1, n_smp-i
+           r_mat(j,j+i) = tmpr
+        end do
+     end do
+     do i = 2, n_smp-1
+        do j = 1, i-1
+           r_mat(i,j) = r_mat(j,i)
+        end do
+     end do
+     
+     ! Calculate inverse matrix via SVD decompositon
+     call svdcmp(n_smp,n_smp,itmax,tol,r_mat,w,v,rv)
+     diag = 0.0
+     do i = 1, n_smp
+        if (w(i) > 0.00001) then
+           diag(i,i) = 1.0 / w(i)
+        else
+           diag(i,i) = 0.0
+        end if
+     end do
+     r_inv(1:n_smp,1:n_smp,itrc) = matmul(matmul(v,diag),transpose(r_mat))
+  end do
+  return 
+end subroutine calc_rinv
+
+subroutine calc_rinv2()
+  use params
+  implicit none 
+  
+  integer :: i, j, itmax, ios, flag, itrc
+  real :: r_mat(n_smp,n_smp), tmpr
+  real :: tol, w(n_smp),rv(n_smp),v(n_smp,n_smp), diag(n_smp,n_smp), org(n_smp,n_smp)
+  real :: s_mat(n_smp, n_smp)
+  real :: dum1, dum2, dum3
+  real :: eps_r, wmax
+  
+  
+  ! some parameters used for SVD decomposition
+  tol = 1.0e-6
+  eps_r = 0.01
+  itmax = 1000000
+
+  allocate(r_inv(n_smp,n_smp,ntrc))
+  
+
+  do itrc = 1, ntrc
+     ! Set correlation matrix
+     do i = 1, n_smp
+        do j = i, n_smp
+           r_mat(j,i) = sdv(i, itrc) * sdv(j, itrc) * acf(abs(j-i)+1, itrc)
+        end do
+     end do
+     
+     ! Calculate inverse matrix via SVD decompositon
+     call svdcmp(n_smp,n_smp,itmax,tol,r_mat,w,v,rv)
+     wmax = maxval(w)
+     diag = 0.0
+     do i = 1, n_smp
+        if (w(i) > wmax * 0.005) then
+           write(*,*)"Eigen values:", i, w(i)
+           diag(i,i) = 1.0 / w(i)
+        else
+           diag(i,i) = 0.0
+        end if
+     end do
+     r_inv(1:n_smp,1:n_smp,itrc) = matmul(matmul(v,diag),transpose(r_mat))
+  end do
+  return 
+end subroutine calc_rinv2
+
+!------------------------------------------------------------
+
+subroutine read_data_file()
+  use PTmod
+  use params
+  implicit none 
+  
+  integer :: ios, i, itrc
+  real(8) :: dum1, dum2
+  
+  do itrc = 1, ntrc
+     open(30, file = datafile(itrc), iostat = ios, status = 'old')
+     if (ios /= 0) then
+        write(*,*)"ERROR: cannot open: ", datafile(itrc)
+        stop
+     end if
+     i = 1
+     do while (ios == 0)
+        if (i >= i_win_start .and. i <= i_win_end) then
+           read(30,*,iostat=ios)dum1, d_obs(i-i_win_start+1, itrc)
+        else
+           read(30,*,iostat=ios)
+        end if
+        i = i + 1
+     end do
+     close(30)
+
+     open(40, file = sdvfile(itrc), iostat = ios, status = "old")
+     if (ios /= 0) then
+        write(*,*)"ERROR: cannot open: ", sdvfile(itrc)
+        stop
+     end if
+     i = 1
+     do while (ios == 0)
+        if (i >= i_win_start .and. i <= i_win_end) then
+           read(40,*,iostat=ios)dum1, sdv(i-i_win_start+1, itrc)
+        else
+           read(40,*,iostat=ios)
+        end if
+        i = i + 1
+     end do
+     close(40)
+
+     open(50, file = acffile(itrc), iostat = ios, status = "old")
+     if (ios /= 0) then
+        write(*,*)"ERROR: cannot open: ", acffile(itrc)
+        stop
+     end if
+     do i = 1, n_smp
+        read(50,*)dum1, acf(i, itrc)
+     end do
+     close(50)
+
+     
+  end do
+  return 
+end subroutine read_data_file
+
+!------------------------------------------------------------
+
+subroutine read_vel_file()
+  use params
+  implicit none 
+  
+  integer :: ios, i
+  real(8) :: z0, z1, dz, dum1, dum2, dz_prev
+  
+  open(20,file=vel_ref_file,iostat=ios,status="old")
+  if (ios /= 0) then
+     write(*,*)"ERROR: cannot open ", trim(vel_ref_file)
+     stop
+  end if
+  
+  ! get number of layer and check z-slice spacing
+  i = 0
+  z0 = -999.0
+  dz_prev = 0.0
+  do 
+     read(20,*,iostat=ios)dum1, dum2, z1
+     if (ios /= 0) exit
+     i = i + 1
+     if (i /= 1) then
+        dz_vel_ref = z1 - z0
+        if (i > 2) then
+           if (abs(dz_vel_ref -  dz_prev) > 0.0001) then
+              write(*,*)"ERROR: uneven spacing in velocity reference model"
+           end if
+        end if
+     end if
+     z0 = z1
+     dz_prev = dz_vel_ref
+  end do
+  n_vel_ref = i
+  rewind(20)
+
+  allocate(vs_ref(n_vel_ref))
+  allocate(vp_ref(n_vel_ref))
+
+  ! read velocity
+  do i = 1, n_vel_ref
+     read(20,*)vp_ref(i), vs_ref(i), dum2
+  end do
+
+  close(20)
+  
+
+  return 
+end subroutine read_vel_file
+
+!------------------------------------------------------------
+
+subroutine calc_param
+  use params
+  implicit none
+  integer :: i
+  
+
+  ! Prior bounds
+  del_k      = kmax      - kmin
+  del_v      = vmax      - vmin
+  del_vpvs   = vpvsmax   - vpvsmin
+  del_z      = zmax      - zmin
+  del_sig    = sigmax    - sigmin
+  del_sedvs  = sed_vsmax - sed_vsmin
+  del_sedvp  = sed_vpmax - sed_vpmin
+  del_sedh   = sed_hmax - sed_hmin
+     
+
+  ! Bin width
+  del_zbin = (zmax + sdep) / n_zbin
+  del_vbin = (vbinmax - vbinmin) / n_vbin
+  del_vpvsbin = (vpvsmax - vpvsmin) / n_vpvsbin
+  del_abin    = (abinmax - abinmin) / n_abin
+  del_sigbin = (sigmax - sigmin) / n_sigbin
+  
+  ! Time window
+  i_win_start = nint((t_win_start-t_file_start)/delta)+ 1
+  i_win_end   = nint((t_win_end-t_file_start)/delta)+ 1
+  n_smp = i_win_end - i_win_start + 1
+  allocate(d_obs(n_smp, ntrc))
+  allocate(sdv(n_smp, ntrc))
+  allocate(acf(n_smp, ntrc))
+
+  ! Correlation in time
+  r(1:ntrc) = exp(- a_gus(1:ntrc) * a_gus(1:ntrc) * delta * delta)
+  
+  ! number of data for FFT 
+  i = 1
+  do
+     nfft = 2**i
+     if (nfft >= n_smp) exit
+     i = i + 1
+  end do
+  !nfft = nfft * 8
+  nfft = 4096
+  
+  ! assign proposal type
+  itype_birth = -999
+  itype_vs    = -999
+  itype_z     = -999
+  itype_death = -999
+  itype_sig   = -999
+  itype_vpvs  = -999
+  itype_sedvs = -999
+  itype_sedvp = -999
+  itype_sedh  = -999
+
+  ntype = 1
+  itype_birth = ntype
+
+  ntype = ntype + 1
+  itype_vs = ntype
+
+  ntype = ntype + 1
+  itype_z = ntype
+
+  ntype = ntype + 1
+  itype_death = ntype
+
+!  ntype = ntype + 1
+!  itype_sig = ntype
+  
+  if (vpvs_flag == 2) then
+     ntype = ntype + 1
+     itype_vpvs = ntype
+  end if
+
+  if (sed_flag == 1) then
+     ntype = ntype + 1
+     itype_sedvs = ntype
+     ntype = ntype + 1
+     itype_sedvp = ntype
+     ntype = ntype + 1
+     itype_sedh  = ntype
+  end if
+  
+  ! number of medel parameter 
+  npara = 3 * kmax + 1 + ntrc
+  if (sed_flag == 1) then
+     npara = npara + 3
+  end if
+  
+  
+  return 
+end subroutine calc_param
+
+!------------------------------------------------------------
+
+subroutine read_param(paramfile)
+  use params
+  implicit none 
+  character(*), intent(in) :: paramfile
+  character(100) :: line
+  integer :: ios, i
+  
+  ! Open parameter file
+  open(10,file=paramfile,iostat=ios,status='old')
+  if (ios /= 0) then
+     write(0,*)"ERROR: cannot open ", paramfile
+     stop
+  end if
+  
+  ! Read parameter file
+
+  ! ** 0. Iteration
+  call get_line(10,line)
+  read(line,*) iburn
+  write(*,*)"iburn: ", iburn
+
+  call get_line(10,line)
+  read(line,*) nsteps
+  write(*,*)"nsteps: ", nsteps
+
+
+  call get_line(10,line)
+  read(line,*) nskip
+  write(*,*)"nskip: ", nskip
+
+
+  call get_line(10,line)
+  read(line,*) nchains
+  write(*,*)"nchains: ", nchains
+
+
+  call get_line(10,line)
+  read(line,*) ncool
+  write(*,*)"ncool: ", ncool
+
+  call get_line(10,line)
+  read(line,*) Thigh
+  write(*,*)"Thigh: ", Thigh
+  
+
+  call get_line(10,line)
+  read(line,*) iseed, iseed0
+  write(*,*)"iseed: ", iseed
+  write(*,*)"iseed0: ", iseed0
+
+
+  ! ** 1. Observed data info.
+  
+  call get_line(10,line)
+  read(line,*) ntrc
+  write(*,*)"ntrc: ", ntrc
+
+  
+  allocate(datafile(ntrc), r(ntrc), a_gus(ntrc))
+  allocate(acffile(ntrc), sdvfile(ntrc))
+
+  do i = 1, ntrc
+     call get_line(10,line)
+     read(line,'(a)') datafile(i)
+     datafile(i) = adjustl(datafile(i))
+     write(*,*)"datafile", i, ": ", trim(datafile(i))
+  end do
+
+  call get_line(10,line)
+  read(line,*) delta
+  write(*,*)"delta: ", delta
+
+
+  call get_line(10,line)
+  read(line,*) t_file_start
+  write(*,*)"t_file_start: ", t_file_start
+
+  
+  call get_line(10,line)
+  read(line,*) t_win_start, t_win_end
+  write(*,*)"t_win_start: ", t_win_start
+  write(*,*)"t_win_end: ", t_win_end
+
+  
+  call get_line(10,line)
+  read(line,*)rayp
+  write(*,*)"rayp", i, ": ", rayp
+
+
+  do i = 1, ntrc
+     call get_line(10,line)
+     read(line,*)a_gus(i)
+     write(*,*)"a_gus", i, ": ", a_gus(i)
+  end do
+
+  do i = 1, ntrc
+     call get_line(10,line)
+     read(line,'(a)') sdvfile(i)
+     sdvfile(i) = adjustl(sdvfile(i))
+     write(*,*)"sdvfile", i, ": ", trim(sdvfile(i))
+  end do
+
+  do i = 1, ntrc
+     call get_line(10,line)
+     read(line,'(a)') acffile(i)
+     acffile(i) = adjustl(acffile(i))
+     write(*,*)"acffile", i, ": ", trim(acffile(i))
+  end do
+
+
+  call get_line(10,line)
+  read(line,'(a)') vel_ref_file
+  vel_ref_file = adjustl(vel_ref_file)
+  write(*,*)"vel_ref_file: ", trim(vel_ref_file)
+  
+  call get_line(10,line)
+  read(line,*) vpvs_flag
+  write(*,*)"vpvs_flag: ", vpvs_flag
+
+
+  call get_line(10,line)
+  read(line,*)sdep
+  write(*,*)"sdep: ", sdep
+
+  
+  call get_line(10,line)
+  read(line,*)kmin, kmax
+  write(*,*)"kmin: ", kmin
+  write(*,*)"kmax: ", kmax
+
+  
+  call get_line(10,line)
+  read(line,*)zmin, zmax
+  write(*,*)"zmin: ", zmin
+  write(*,*)"zmax: ", zmax
+
+  
+  call get_line(10,line)
+  read(line,*)vmin, vmax
+  write(*,*)"vmin: ", vmin
+  write(*,*)"vmax: ", vmax
+
+
+
+  call get_line(10,line)
+  read(line,*)vpvsmin, vpvsmax
+  write(*,*)"vpvsmin: ", vpvsmin
+  write(*,*)"vpvsmax: ", vpvsmax
+  
+  
+  call get_line(10,line)
+  read(line,*)sigmin, sigmax
+  write(*,*)"sigmin: ", sigmin
+  write(*,*)"sigmax: ", sigmax
+  
+  call get_line(10,line)
+  read(line,*)sed_flag
+  write(*,*)"sed_flag: ", sed_flag
+    
+  call get_line(10,line)
+  read(line,*)sed_vsmin, sed_vsmax
+  write(*,*)"sed_vsmin: ", sed_vsmin
+  write(*,*)"sed_vsmax: ", sed_vsmax
+  
+  call get_line(10,line)
+  read(line,*)sed_vpmin, sed_vpmax
+  write(*,*)"sed_vpmin: ", sed_vpmin
+  write(*,*)"sed_vpmax: ", sed_vpmax
+  
+  call get_line(10,line)
+  read(line,*)sed_hmin, sed_hmax
+  write(*,*)"sed_hmin: ", sed_hmin
+  write(*,*)"sed_hmax: ", sed_hmax
+  
+  call get_line(10,line)
+  read(line,*)base_flag
+  write(*,*)"base_flag: ", base_flag
+    
+  call get_line(10,line)
+  read(line,*)vp_base
+  write(*,*)"vp_base: ", vp_base
+
+  call get_line(10,line)
+  read(line,*)vs_base
+  write(*,*)"vs_base: ", vs_base
+  
+    call get_line(10,line)
+  read(line,*)sdv_z
+  write(*,*)"sdv_z: ", sdv_z
+
+  call get_line(10,line)
+  read(line,*)sdv_v
+  write(*,*)"sdv_v: ", sdv_v
+  
+  call get_line(10,line)
+  read(line,*)sdv_vpvs
+  write(*,*)"sdv_vpvs: ", sdv_vpvs
+
+  call get_line(10,line)
+  read(line,*)sdv_sig
+  write(*,*)"sdv_sig: ", sdv_sig
+  
+  call get_line(10,line)
+  read(line,*)n_zbin
+  write(*,*)"n_zbin: ", n_zbin
+
+  call get_line(10,line)
+  read(line,*)vbinmin, vbinmax, n_vbin
+  write(*,*)"vbinmin: ", vbinmin
+  write(*,*)"vbinmax: ", vbinmax
+  write(*,*)"n_vbin: ", n_vbin
+  
+  call get_line(10,line)
+  read(line,*)n_vpvsbin
+  write(*,*)"n_vpvsbin: ", n_vpvsbin
+
+  call get_line(10,line)
+  read(line,*)abinmin, abinmax, n_abin
+  write(*,*)"abinmin: ", abinmin
+  write(*,*)"abinmax: ", abinmax
+  write(*,*)"n_abin: ", n_abin
+  
+  call get_line(10,line)
+  read(line,*)n_sigbin
+  write(*,*)"n_sigbin: ", n_sigbin
+  
+  close(10)
+  return 
+end subroutine read_param
+
+!------------------------------------------------------------
+
+subroutine get_line(i_unit,line)
+  implicit none 
+  integer, intent(in) :: i_unit
+  character(100), intent(out) :: line
+  
+  do 
+     read(10,'(a)')line
+     if (line(1:1) == "#") then
+        cycle
+     else
+        return
+     end if
+  end do
+  
+  return 
+end subroutine get_line
+

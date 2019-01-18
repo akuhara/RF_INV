@@ -9,6 +9,10 @@ my $dir = ".";
 if (defined $ARGV[0]) {
     $dir = $ARGV[0];
 }
+my $test_mode = 0;
+if (defined $ARGV[1] and $ARGV[1] eq "test") {
+    $test_mode = 1;
+}
 
 # Input file names
 my $param_file = "$dir/params.in";
@@ -71,7 +75,7 @@ my $xlabel_vs = "Vs (km/s)";
 my $ylabel_vs = "Depth (km)";
 my $xshift_vs = "0c";
 my $yshift_vs = "-12c";  
-#
+# Vp
 my $width_vp = "5c";
 my $hight_vp = "-9c";
 my $ymin_vp  = -1.2;
@@ -80,6 +84,7 @@ my $zmin_vp  = 0.0;
 my $zmax_vp  = 0.2;
 my $xtic_vp  = "2f1";
 my $ytic_vp  = "10f5";
+my $ztic_vp  = 0.1;
 my $xlabel_vp = "Vp (km/s)";
 my $ylabel_vp = "Depth (km)";
 my $xshift_vp = "7c";
@@ -202,7 +207,24 @@ foreach my $itrc (1..$param{ntrc}) {
     }
     close $VS_REF_UP or die;
     
-    
+    if ($test_mode) {
+	open my $TEST_VEL, "<", "test_vel" or die;
+	open my $TEST_VS, "| gmt psxy -J -R -O -K -W1.0,pink ". 
+	    " >> $out" or die;
+	my $tmp_dep = 0.0;
+	while (my $line = <$TEST_VEL>) {
+	    chomp $line;
+	    my @item = split q{ }, $line;
+	    my ($vs, $h) = @item[1,3];
+	    print {$TEST_VS} "$vs $tmp_dep\n";
+	    $tmp_dep += $h;
+	    print {$TEST_VS} "$vs $tmp_dep\n";
+	}
+	close $TEST_VEL or die;
+	close $TEST_VS or die;
+    }
+
+
     # Vp profile
     my $dbin_vp = sprintf "%.5f", ($param{vp_max} - $param{vp_min}) / $param{nbin_vp};
     my $dz_vp = ($zmax_vp - $zmin_vp) / 10.0;
@@ -228,13 +250,33 @@ foreach my $itrc (1..$param{ntrc}) {
 	print {$VP_REF_LOW} $vp_c[$i] + $param{dvp_min}, q{ }, $z_ref[$i],"\n";
     }
     close $VP_REF_LOW or die;
-    open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O >> $out" or die;
+    open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
 	print {$VP_REF_UP} $vp_c[$i] + $param{dvp_max}, q{ }, $z_ref[$i],"\n";
     }
     close $VP_REF_UP or die;
-
+    if ($test_mode) {
+	open my $TEST_VEL, "<", "test_vel" or die;
+	open my $TEST_VP, "| gmt psxy -J -R -O -K -W1.0,pink ". 
+	    " >> $out" or die;
+	my $tmp_dep = 0.0;
+	while (my $line = <$TEST_VEL>) {
+	    chomp $line;
+	    my @item = split q{ }, $line;
+	    my ($vp, $h) = @item[0,3];
+	    print {$TEST_VP} "$vp $tmp_dep\n";
+	    $tmp_dep += $h;
+	    print {$TEST_VP} "$vp $tmp_dep\n";
+	}
+	close $TEST_VEL or die;
+	close $TEST_VP or die;
+    }
+    
+    system "gmt psscale -DJCB+ef+o0c/2.0c -C/tmp/vp.cpt " .
+	"-B$ztic_vp:\"Probability\": " .
+	"-R -J -O >> $out";
 }
+
 
 #---------------------------------------------------------------------
 

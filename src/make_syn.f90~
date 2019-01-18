@@ -1,0 +1,6 @@
+program make_syn
+  use model
+  implicit none 
+  
+  
+end program make_syn

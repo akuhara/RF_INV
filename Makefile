@@ -1,6 +1,6 @@
 MF90 = mpif90
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
-#FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 
 
@@ -10,11 +10,14 @@ LAPACK = -llapack -lblas
 
 BINDIR  = ./bin
 TARGET1 = $(BINDIR)/rf_inv
-OBJS1   = src/rf_inv.o src/params.o src/mt19937.o src/read_obs.o \
+OBJS1   = src/rf_inv.o src/params.o src/mt19937.o \
          src/fftw.o src/model.o src/sort.o src/likelihood.o src/forward.o \
          src/pt_mcmc.o src/mcmc_out.o
 TARGET2 = $(BINDIR)/make_syn
-OBJS2   = src/make_syn.o
+OBJS2   = src/make_syn.o src/model.o src/params.o src/sort.o src/mt19937.o \
+	  src/likelihood.o src/forward.o src/fftw.o \
+	  src/pt_mcmc.o
+
 
 
 
@@ -30,13 +33,14 @@ $(TARGET2): $(OBJS2)
 
 src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
               forward.mod pt_mcmc.mod mcmc_out.mod
-src/read_obs.o: params.mod
 src/fftw.o: params.mod
 src/model.o: params.mod mt19937.mod sort.mod 
 src/likelihood.o: params.mod model.mod forward.mod
 src/forward.o: params.mod fftw.mod model.mod
 src/pt_mcmc.o: params.mod mt19937.mod model.mod likelihood.mod
 src/mcmc_out.o: params.mod
+src/make_syn.o: params.mod model.mod pt_mcmc.mod likelihood.mod forward.mod \
+	        fftw.mod mt19937.mod
 
 clean:
 	rm -f *.mod bin/inv_PT_RF src/*.o *.o

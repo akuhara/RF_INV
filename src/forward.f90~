@@ -1,0 +1,27 @@
+module forward
+  implicit none 
+  
+  real(8), allocatable :: flt(:,:)
+
+contains
+  
+  !=====================================================================
+  
+  subroutine init_filter()
+    use params, only: a_gus, ntrc, nfft, delta
+    implicit none 
+    integer :: itrc, i
+
+    
+    do itrc = 1, ntrc
+    end do
+
+
+
+    return 
+  end subroutine init_filter
+  
+  !=====================================================================
+
+  
+end module forward

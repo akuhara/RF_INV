@@ -1,7 +1,7 @@
 module forward
   implicit none 
   
-  real(8), allocatable, private :: flt(:,:)
+  real(8), allocatable :: flt(:,:)
   real(8), parameter, private :: pi = 3.1415926535897931d0
   complex(kind(0d0)), parameter, private :: ei = (0.d0, 1.d0)
   complex(kind(0d0)), allocatable, private :: propagator(:,:,:,:,:,:)
@@ -88,6 +88,7 @@ contains
 
     nh = n / 2 + 1
     do itrc = 1, ntrc
+
        call fwd_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
             & alpha, beta, rho, h, freq_r, freq_v)
 

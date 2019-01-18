@@ -11,7 +11,7 @@
 # Highest temperature
 50.d0
 # Random number seed
-24445678
+12345678
 # Number of traces
 1
 # Ray parameter
@@ -21,25 +21,25 @@
 # Sample number used in FFT
 2048
 # Observed RF file
-uni.r.rft
+test_trace01wn
 # Start/End time
 0 10.0
 # Station depth (km)
-0.0
+4.4
 # Reference velocity file
-uni_vel
+ref_vel
 # Vp mode (0: Fixed, 1: solved)
-0
+1
 # Min./Max. # of interfaces
-1 4
+1 10
 # Min./Max. of interface depth
-0.0 20.0
+4.4 20.0
 # Min./Max. of dVs
--2.0 2.0
+-1.0 1.0
 # Min./Max. of dVp
--2.0 2.0
+-1.5 1.5
 # Min./Max. of noise sigma
-0.01 0.1
+0.005 0.2
 # standard deviation for depth proposal
 0.2
 # standard deviation for dVs proposal
