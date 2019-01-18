@@ -1,4 +1,0 @@
-program main
-  use params
-  implicit none 
-  
