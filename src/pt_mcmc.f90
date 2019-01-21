@@ -1,13 +1,41 @@
+!=======================================================================
+!   RF_INV: 
+!   Trans-dimensional inversion of receiver functions
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
+
 module pt_mcmc
   use params
   implicit none 
-  real(8), allocatable :: log_lklh(:)
   integer :: nmod 
   integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
   integer, allocatable :: nprop(:), naccept(:)
   integer, allocatable :: nvpz(:,:), nvsz(:,:)
   real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
+  public init_pt_mcmc
+  private judge_mcmc, judge_pt
 contains
   
   !---------------------------------------------------------------------
@@ -17,7 +45,7 @@ contains
     use likelihood
     implicit none 
     logical, intent(in) :: verb
-    real(8) :: rft(nfft, ntrc)
+    real(8) :: prop_rft(nfft, ntrc)
     integer :: ichain
 
     !allocate
@@ -26,7 +54,6 @@ contains
        write(*,*) "--- Allocate memory for recording models ---"
     end if
     
-    allocate(log_lklh(nchains))
     allocate(nk(k_max), nz(nbin_z), nsig(nbin_sig, ntrc))
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
@@ -77,19 +104,13 @@ contains
        end do
     end if
     
-    ! calculate inital log-likelihood
-    do ichain = 1, nchains
-       call calc_log_lklh(ichain, k(ichain), z(1:k_max-1,ichain), &
-            & dvp(1:k_max,ichain), dvs(1:k_max,ichain), &
-            & sig(1:ntrc,ichain), log_lklh(ichain), &
-            & rft)
-    end do
     return 
   end subroutine init_pt_mcmc
   
   !---------------------------------------------------------------------
 
   subroutine pt_control(verb)
+    use likelihood
     use mt19937
     implicit none 
     include "mpif.h"
@@ -116,8 +137,7 @@ contains
        if (rank > 0) then
           do ichain = 1, nchains
              temp = temps(ichain)
-             call mcmc(it, ichain, temp, e)
-             log_lklh(ichain) = e
+             call mcmc(it, ichain, temp)
           end do
        end if
        if (nchains < 2) cycle ! single-chain MCMC
@@ -151,8 +171,8 @@ contains
           ! Swap within the single processor
           temp1 = temps(ichain1)
           temp2 = temps(ichain2)
-          e1    = log_lklh(ichain1)
-          e2    = log_lklh(ichain2)
+          e1    = log_likelihood(ichain1)
+          e2    = log_likelihood(ichain2)
           call judge_pt(temp1, temp2, e1, e2, yn)
           if (yn) then
              temps(ichain2) = temp1
@@ -164,7 +184,7 @@ contains
                & MPI_COMM_WORLD, status, ierr)
           temp1 = temps(ichain1)
           temp2 = rpack(1)
-          e1 = log_lklh(ichain1)
+          e1 = log_likelihood(ichain1)
           e2 = rpack(2)
           call judge_pt(temp1, temp2, e1, e2, yn)
           if (yn) then
@@ -176,7 +196,7 @@ contains
        else if (rank2 == rank) then
           ! Send status to the other chain and receive result
           rpack(1) = temps(ichain2)
-          rpack(2) = log_lklh(ichain2)
+          rpack(2) = log_likelihood(ichain2)
           call mpi_send(rpack, 2, MPI_REAL8, rank1, 2018, &
                & MPI_COMM_WORLD, status, ierr)
           call mpi_recv(rpack, 1, MPI_REAL8, rank1, 1988, &
@@ -210,7 +230,7 @@ contains
 
   !---------------------------------------------------------------------
 
-  subroutine mcmc(iter, ichain, temp, out_log_lklh)
+  subroutine mcmc(iter, ichain, temp)
     use mt19937
     use model
     use likelihood
@@ -218,17 +238,16 @@ contains
     implicit none 
     integer, intent(in) :: iter, ichain
     real(8), intent(in) :: temp
-    real(8), intent(out) :: out_log_lklh
+    real(8) :: prop_log_likelihood, prop_rft(nfft, ntrc)
     real(8) :: prop_dvp(k_max), prop_dvs(k_max), prop_z(k_max)
     real(8) :: prop_sig(ntrc), tmpz
     integer :: prop_k
     integer :: itype, itarget, ilay, ibin, iz1, iz2, itrc, iz
     integer :: ivp, ivs, it
-    logical :: null_flag, yn
+    logical :: null_flag, yn, fwd_flag
     integer :: nlay
     real(8) :: alpha(nlay_max), beta(nlay_max)
     real(8) :: h(nlay_max), rho(nlay_max)
-    real(8) :: rft(nfft, ntrc)
     
     prop_k = k(ichain)
     prop_dvp(1:k_max)   = dvp(1:k_max, ichain)
@@ -306,21 +325,25 @@ contains
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       call calc_log_lklh(ichain, prop_k, prop_z, prop_dvp, prop_dvs, &
-            & prop_sig, out_log_lklh, rft)
-       call judge_mcmc(temp, log_lklh(ichain), out_log_lklh, yn)
+       if (itype /= 4) then
+          fwd_flag = .true.
+       else
+          fwd_flag = .false.
+       end if
+       call calc_likelihood(ichain, fwd_flag, &
+            & prop_k, prop_z, prop_dvp, prop_dvs, &
+            & prop_sig, prop_log_likelihood, prop_rft)
+       call judge_mcmc(temp, log_likelihood(ichain), &
+            & prop_log_likelihood, yn)
        if (yn) then
-          log_lklh(ichain)       = out_log_lklh
+          log_likelihood(ichain) = prop_log_likelihood
           k(ichain)              = prop_k
           dvp(1:k_max, ichain)   = prop_dvp(1:k_max)
           dvs(1:k_max, ichain)   = prop_dvs(1:k_max)
           z(1:k_max - 1, ichain) = prop_z(1:k_max - 1)
           sig(1:ntrc, ichain)    = prop_sig(1:ntrc)
-       else
-          out_log_lklh = log_lklh(ichain)
+          rft(1:nfft, 1:ntrc, ichain) = prop_rft(:,:)
        end if
-    else
-       out_log_lklh = log_lklh(ichain)
     end if
 
     
@@ -377,7 +400,8 @@ contains
        ! RF trace
        do itrc = 1, ntrc
           do it = 1, nsmp
-             ibin = int((rft(it, itrc) - amp_min) / dbin_amp) + 1
+             ibin = int((rft(it, itrc, ichain) - amp_min) &
+                  & / dbin_amp) + 1
              if (ibin < 1) then
                 write(0,*)"Warning: RF amp. out of range"
                 ibin = 1

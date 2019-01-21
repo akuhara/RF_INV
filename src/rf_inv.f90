@@ -1,3 +1,30 @@
+!=======================================================================
+!   RF_INV: 
+!   Trans-dimensional inversion of receiver functions
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
+
 program main
    use params
    use mt19937
@@ -37,29 +64,23 @@ program main
    call read_obs(verb)
 
    ! Initialize random number generator
+   iseed = iseed + rank * rank * 10000 + 23 * rank
    call sgrnd(iseed)
 
    ! Initialize FFTW
    call init_fftw()
 
-   ! Make Gaussian low-pass filter
-   call init_filter()
-
+   call init_forward(verb)
    ! Read reference velocity model
    call read_ref_model(verb)
 
    ! Generate initial model
    call init_model(verb)
    
-   ! Initialize propagator matrix
-   !call init_p_mat(verb)
+   call init_likelihood(verb)
    
-   ! Initialize noise sigma
-   call init_sig(verb)
-
-   ! Calculate covariacne matrix
-   call calc_r_inv(verb)
-
+   
+   
    ! Initialize temperature
    call init_pt_mcmc(verb)
 

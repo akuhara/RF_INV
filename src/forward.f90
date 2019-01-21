@@ -1,15 +1,60 @@
+!=======================================================================
+!   RF_INV: 
+!   Trans-dimensional inversion of receiver functions
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
+
 module forward
   implicit none 
-  
-  real(8), allocatable :: flt(:,:)
+  !
+  real(8), allocatable, public :: flt(:,:)
+
+  !
   real(8), parameter, private :: pi = 3.1415926535897931d0
   complex(kind(0d0)), parameter, private :: ei = (0.d0, 1.d0)
-  complex(kind(0d0)), allocatable, private :: propagator(:,:,:,:,:,:)
+  complex(kind(0d0)), allocatable, private :: layer_matrix(:,:,:,:,:,:)
+
+  public init_forward, calc_rf
+  private init_filter, init_layer_matrix, calc_seis, &
+       & e_inverse, layer_matrix_sol, layer_matrix_liq, water_level_decon
+  
 contains
 
 
   !=====================================================================
-  
+  subroutine init_forward(verb)
+    implicit none 
+    logical, intent(in) :: verb
+    
+    call init_filter()
+    !call init_layer_matrix(verb)
+    
+    return 
+  end subroutine init_forward
+    
+  !=====================================================================
+    
   subroutine init_filter()
     use params, only: a_gus, ntrc, nfft, delta
     implicit none 
@@ -37,7 +82,7 @@ contains
 
   !=====================================================================  
   
-  subroutine init_p_mat(verb)
+  subroutine init_layer_matrix(verb)
     use model
     use params
     implicit none 
@@ -48,7 +93,7 @@ contains
     real(8) :: h(nlay_max), rho(nlay_max)
     integer :: ichain
 
-    allocate(propagator(4, 4, nlay_max, nfft/2+1, ntrc, nchains))
+    allocate(layer_matrix(4, 4, nlay_max, nfft/2+1, ntrc, nchains))
     
     do ichain = 1, nchains
        call format_model(k(ichain), z(:,ichain), &
@@ -60,20 +105,19 @@ contains
           do iomg = 2, nfft/2 + 1
              omega = (iomg - 1) * domg
              do ilay = 1, nlay
-                call propagator_sol(omega, rho(ilay), alpha(ilay), &
+                call layer_matrix_sol(omega, rho(ilay), alpha(ilay), &
                      & beta(ilay), rayps(itrc), h(ilay), &
-                     & propagator(:, :, ilay, iomg, itrc, ichain))
+                     & layer_matrix(:, :, ilay, iomg, itrc, ichain))
                 
              end do
           end do
        end do
     end do
 
-  end subroutine init_p_mat
+  end subroutine init_layer_matrix
   !=====================================================================
-
-
-  subroutine fwd_rf(chain_id, nlay, n, ntrc, rayps, alpha, beta, rho, h, rft)
+  
+  subroutine calc_rf(chain_id, nlay, n, ntrc, rayps, alpha, beta, rho, h, rft)
     use fftw
     use params, only : delta, a_gus
     implicit none 
@@ -89,7 +133,7 @@ contains
     nh = n / 2 + 1
     do itrc = 1, ntrc
 
-       call fwd_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
+       call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
             & alpha, beta, rho, h, freq_r, freq_v)
 
        ! Set upward positive
@@ -112,13 +156,11 @@ contains
     end do
     
     return 
-  end subroutine fwd_rf
-  
-  
+  end subroutine calc_rf  
   
   !=====================================================================
   
-  subroutine fwd_seis (trc_id, chain_id, nlay, npts, rayp, ipha, &
+  subroutine calc_seis (trc_id, chain_id, nlay, npts, rayp, ipha, &
        & alpha, beta, rho, h, ur_freq, uz_freq)
     use params, only: delta
     implicit none
@@ -165,12 +207,12 @@ contains
           p_prod(j,j) =(1.d0, 0.d0)
        end do
        do ilay = ilay0, nlay - 1
-          call propagator_sol(omg, rho(ilay), alpha(ilay), &
+          call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
                & beta(ilay), rayp, h(ilay), &
                      & p_mat2)
           p_prod = matmul(p_mat2, p_prod)
           !p_prod = matmul( &
-          !     & propagator(1:4, 1:4, ilay, iomg, trc_id, chain_id), &
+          !     & layer_matrix(1:4, 1:4, ilay, iomg, trc_id, chain_id), &
           !     & p_prod)
        end do
        sl = matmul(e_inv, p_prod)
@@ -186,7 +228,7 @@ contains
              uz_freq(iomg) = sl(3,1) / denom
           end if
        else
-          call propagator_liq(omg, rho(1), alpha(1), rayp, h(1), lq)
+          call layer_matrix_liq(omg, rho(1), alpha(1), rayp, h(1), lq)
           a = sl(4,2)*lq(1,1) + sl(4,4)*lq(2,1)
           b = sl(3,2)*lq(1,1) + sl(3,4)*lq(2,1)
           if (ipha >= 0) then
@@ -201,7 +243,7 @@ contains
     end do
     
     return 
-  end subroutine fwd_seis
+  end subroutine calc_seis
   
   !=====================================================================
   !------------------------------------------------------------
@@ -240,9 +282,9 @@ contains
   end subroutine e_inverse
   
   !------------------------------------------------------------
-  ! propagator (Aki & Richards, pp. 398, Eq. (3) in Box 9.1)
+  ! layer_matrix (Aki & Richards, pp. 398, Eq. (3) in Box 9.1)
   !------------------------------------------------------------
-  subroutine propagator_sol(omega, rho, alpha, beta, p, z, p_mat)
+  subroutine layer_matrix_sol(omega, rho, alpha, beta, p, z, p_mat)
     implicit none
     real(8), intent(in) :: alpha, beta
     real(8), intent(in) :: omega, rho, p, z
@@ -278,10 +320,10 @@ contains
     p_mat(4,4) = p_mat(2,2)
     
     return 
-  end subroutine propagator_sol
+  end subroutine layer_matrix_sol
   
   !------------------------------------------------------------
-  subroutine propagator_liq(omega, rho, alpha, p, z, p_mat)
+  subroutine layer_matrix_liq(omega, rho, alpha, p, z, p_mat)
     implicit none 
     real(8), intent(in) :: omega, rho, alpha, p, z
     complex(kind(0d0)), intent(out) :: p_mat(2,2)
@@ -299,7 +341,7 @@ contains
     p_mat(2,2) = cos_xi
     
     return 
-  end subroutine propagator_liq
+  end subroutine layer_matrix_liq
   
   !=====================================================================
   

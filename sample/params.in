@@ -1,11 +1,11 @@
 # Iteration number in burn-in period
-1000
+100000
 # Iteration number after burn-in
-5000
+500000
 # Iteration number per sample
-1
+100
 # Number of chains per processor
-1
+5
 # Number of non-tempered chains per processor
 1
 # Highest temperature
@@ -25,21 +25,21 @@ test_trace01wn
 # Start/End time
 0 10.0
 # Station depth (km)
-4.4
+0.0
 # Reference velocity file
-ref_vel
+uni_vel
 # Vp mode (0: Fixed, 1: solved)
-1
+0
 # Min./Max. # of interfaces
 1 10
 # Min./Max. of interface depth
-4.4 20.0
+0.0 20.0
 # Min./Max. of dVs
--1.0 1.0
+-2.0 2.0
 # Min./Max. of dVp
--1.5 1.5
+-2. 2.0
 # Min./Max. of noise sigma
-0.005 0.2
+0.005 0.1
 # standard deviation for depth proposal
 0.2
 # standard deviation for dVs proposal

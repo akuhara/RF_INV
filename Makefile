@@ -1,6 +1,6 @@
 MF90 = mpif90
-#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
-FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
+FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 
 

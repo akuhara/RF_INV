@@ -1,3 +1,30 @@
+!=======================================================================
+!   RF_INV: 
+!   Trans-dimensional inversion of receiver functions
+!   Copyright (C) 2019 Takeshi Akuhara
+!
+!   This program is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   This program is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!
+!
+!   Contact information
+!
+!   Email  : akuhara @ eri. u-tokyo. ac. jp 
+!   Address: Earthquake Research Institute, The Univesity of Tokyo
+!           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
+!
+!=======================================================================
+
 program make_syn
   use params
   use model
@@ -9,7 +36,7 @@ program make_syn
   integer :: nlay, i, itrc, it, ierr
   real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
   logical, parameter :: verb = .true.
-  real(8), allocatable :: rft(:, :), noise(:,:), noise_sigma(:)
+  real(8), allocatable :: noise(:,:), noise_sigma(:)
   character(clen_max) :: out_sac
 
   call get_params(verb, "params.in")
@@ -20,16 +47,15 @@ program make_syn
   
   call init_model(verb)
 
-  call init_sig(verb)
-  
   call read_obs(verb)
 
   call init_fftw()
 
-  call init_filter()
+  call init_forward(verb)
+
+  call init_likelihood(verb)
   
-  allocate(rft(nfft, ntrc))
-  
+    
   call format_model(k(1), z(:,1), dvp(:,1), dvs(:,1), &
        & nlay, alpha, beta, rho, h)
 
@@ -42,9 +68,6 @@ program make_syn
      write(54,*)alpha(i), beta(i), rho(i), h(i)
   end do
   close(54)
-  
-  call fwd_rf(1, nlay, nfft, ntrc, rayps, alpha(1:nlay), beta(1:nlay), &
-       & rho(1:nlay), h(1:nlay), rft)
   
   ! Add noise
   allocate(noise(nfft, ntrc), noise_sigma(ntrc))
@@ -82,7 +105,7 @@ program make_syn
      write(55, rec = 106) 1
      do it = 1, nsmp
         write(55, rec = 158 + it) &
-             & real(rft(it, itrc) + noise(it, itrc), kind(0e0))
+             & real(rft(it, itrc, 1) + noise(it, itrc), kind(0e0))
      end do
      close(55)
 
@@ -102,7 +125,7 @@ program make_syn
      write(56, rec = 106) 1
      do it = 1, nsmp
         write(56, rec = 158 + it) &
-             & real(rft(it, itrc), kind(0e0))
+             & real(rft(it, itrc, 1), kind(0e0))
      end do
      close(56)
 
