@@ -8,11 +8,11 @@ IMPORTANT NOTE (1/18/2019) : THIS PROGRAM IS UNDER DEVELOPMENT. ANY BUG REPORT I
 
 # Features
 
-There are many literature exists for trans-dimensional inversion of receiver functions. Nevertheless I would like to make this code open becuase of the following originalities.
+There are many softwares and literatures for trans-dimensional inversion of receiver functions. This inversion code has following originalities.
 
 * Applicable to OBS data
     * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
-* Multiple input trace
+* Multiple input traces
     * You can asign different ray parameter and Gaussian-filter for each trace.    
 * Parallel tempering
     * More efficient than conventional MCMC.
