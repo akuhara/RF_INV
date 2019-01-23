@@ -56,10 +56,11 @@ contains
   !=====================================================================
     
   subroutine init_filter()
-    use params, only: a_gus, ntrc, nfft, delta
+    use params, only: a_gus, ntrc, nfft, delta, t_start
     implicit none 
     integer :: itrc, i, nh
-    real(8) :: df, fac_norm
+    real(8) :: df, fac_norm, omega
+    complex(kind(0d0)) :: fac_shift
 
     nh = nfft / 2 + 1
     df = 1.d0 / (delta * nfft)
@@ -69,10 +70,12 @@ contains
     do itrc = 1, ntrc
        fac_norm = nfft * a_gus(itrc) * delta / sqrt(pi)
        do i = 1, nh
+          omega = (i - 1) * 2.d0 * pi * df
+          fac_shift = exp(ei* (omega + 2.d0 * pi * df) * t_start)
           flt(i, itrc) &
-               & = exp(-(2.d0 * pi * (i - 1) * df &
-               & / (2.d0 * a_gus(itrc)))**2) / &
-               & fac_norm
+               & = exp(-(omega / (2.d0 * a_gus(itrc)))**2) * &
+               & fac_shift / fac_norm
+          
        end do
     end do
     
