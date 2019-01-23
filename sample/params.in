@@ -1,53 +1,47 @@
 # Output directory
-Output
+Debug
 # Iteration number in burn-in period
-10
+1
 # Iteration number after burn-in
-50
+100
 # Iteration number per sample
 1
 # Number of chains per processor
-1
+5
 # Number of non-tempered chains per processor
 1
 # Highest temperature
 50.d0
 # Random number seed
-88888888
+35663298
 # Number of traces
-3
+1
 # Ray parameter
-0.06
-0.06
 0.06
 # Gaussian parameter
 8.0
-4.0
-1.0
 # Sample number used in FFT
 2048
 # Observed RF file
 test_trace01wn
-test_trace02wn
-test_trace03wn
 # Start/End time
--5.0 10.0
+-1.0 10.0
 # Station depth (km)
-0.0
+3.0
 # Reference velocity file
 uni_vel
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 3
+1 15
 # Min./Max. of interface depth
-0.0 20.0
+3.0 20.0
 # Min./Max. of dVs
 -2.0 2.0
 # Min./Max. of dVp
 -2. 2.0
 # Min./Max. of noise sigma
-0.005 0.1
+0.005 0.01
 # standard deviation for depth proposal
 0.05
 # standard deviation for dVs proposal

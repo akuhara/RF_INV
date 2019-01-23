@@ -126,7 +126,7 @@ contains
     call mpi_comm_rank(MPI_COMM_WORLD, rank,  ierr)
     
 
-    n_all = (nproc - 1) * nchains
+    n_all = nproc * nchains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
@@ -134,12 +134,11 @@ contains
           write(*,*)"Iteration #:", it, "/", n_tot_iter
        end if
        ! Within-chain step for all chains
-       if (rank > 0) then
-          do ichain = 1, nchains
-             temp = temps(ichain)
-             call mcmc(it, ichain, temp)
-          end do
-       end if
+       do ichain = 1, nchains
+          temp = temps(ichain)
+          call mcmc(it, ichain, temp)
+       end do
+       
        if (nchains < 2) cycle ! single-chain MCMC
 
        ! determine chain pair
@@ -149,6 +148,7 @@ contains
              itarget2 = int(grnd() * n_all)
              if (itarget2 /= itarget1) exit 
           end do
+
           rank1 = int(itarget1 / nchains) + 1
           rank2 = int(itarget2 / nchains) + 1
           ichain1 = mod(itarget1, nchains) + 1
