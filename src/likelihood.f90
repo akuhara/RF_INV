@@ -202,7 +202,9 @@ contains
        call dgesvd('A', 'A', nsmp, nsmp, r_mat, nsmp, s, u, nsmp, &
             & vt, nsmp, dummy, -1, ierr)
        lwork = nint(dummy(1,1))
-       allocate(work(lwork))
+       if (itrc == 1) then
+          allocate(work(lwork))
+       end if
        
        call dgesvd('A', 'A', nsmp, nsmp, r_mat, nsmp, s, u, nsmp, &
             & vt, nsmp, work, lwork, ierr)

@@ -42,7 +42,7 @@ contains
     integer :: nprop_sum(ntype), naccept_sum(ntype)
     integer :: nvsz_sum(nbin_z, nbin_vs), nvpz_sum(nbin_z, nbin_vp)
     integer :: nsig_sum(nbin_sig, ntrc), nz_sum(nbin_z)
-    
+    character(clen_max) :: out_file
     
     call mpi_reduce(nmod, nmod_sum, 1, MPI_INTEGER4, MPI_SUM, &
          & 0, MPI_COMM_WORLD, ierr)
@@ -75,7 +75,7 @@ contains
                & naccept_sum(2), "/", nprop_sum(2)
           write(*,*)"# of moving interface proposal:", &
                & naccept_sum(3), "/", nprop_sum(3)
-          write(*,*)"# of perturbing noise sigma:", &
+          write(*,*)"# of perturbing noise sigma proposal:", &
                & naccept_sum(4), "/", nprop_sum(4)
           write(*,*)"# of perturbing Vs proposal:", &
                & naccept_sum(5), "/", nprop_sum(5)
@@ -87,10 +87,11 @@ contains
        end if
        
        ! # of layer interfaces
-       open(io_nk, file = 'num_interface.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'num_interface.ppd'
+       open(io_nk, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create num_interface.ppd"
+          write(0,*)"ERROR: cannot create", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -101,10 +102,11 @@ contains
 
 
        ! Synthetic RFs
-       open(io_syn, file = 'syn_trace.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'syn_trace.ppd'
+       open(io_syn, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create syn_trace.ppd"
+          write(0,*)"ERROR: cannot create ", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -121,10 +123,11 @@ contains
        close(io_syn) 
 
        ! Interface depth
-       open(io_z, file = 'interface_depth.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'interface_depth.ppd'
+       open(io_z, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create interface_depth.ppd"
+          write(0,*)"ERROR: cannot create ", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -135,10 +138,11 @@ contains
        close(io_z)
 
        ! Noise sigma
-       open(io_sig, file = 'sigma.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'sigma.ppd'
+       open(io_sig, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create sigma.ppd"
+          write(0,*)"ERROR: cannot create ", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -152,10 +156,11 @@ contains
        close(io_sig)
 
        ! Vs profile
-       open(io_vsz, file = 'vs_z.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'vs_z.ppd'
+       open(io_vsz, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create vs_z.ppd"
+          write(0,*)"ERROR: cannot create ", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -170,10 +175,11 @@ contains
        close(io_vsz)
 
        ! Vp profile
-       open(io_vpz, file = 'vp_z.ppd', status = "unknown", &
+       out_file = trim(out_dir) // "/" // 'vp_z.ppd'
+       open(io_vpz, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
-          write(0,*)"ERROR: cannot create vp_z.ppd"
+          write(0,*)"ERROR: cannot create ", trim(out_file)
           call mpi_finalize(ierr)
           stop
        end if
@@ -186,7 +192,6 @@ contains
           end do
        end do
        close(io_vpz)
-       
     end if
 
     return 

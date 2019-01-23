@@ -1,12 +1,27 @@
-MF90 = mpif90
-FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
-#FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
+MF90 = mpifort
+
+#--------------
+# For fast computation
+#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+#--------------
+
+#--------------
+# For debug
+FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 
+#--------------
 
+#--------------
+# Locations of library
 FFTW   = -I/usr/local/include -lfftw3
 LAPACK = -llapack -lblas
+#--------------
 
+
+#
+# Do not change below
+#
 
 BINDIR  = ./bin
 TARGET1 = $(BINDIR)/rf_inv

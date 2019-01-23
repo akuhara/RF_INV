@@ -4,27 +4,29 @@ use warnings;
 use SAC;
 `gmt gmtset FONT_ANNOT_PRIMARY 10p,Helvetica FONT_ANNOT_SECONDARY 10p,Helvetica FONT_LABEL 11p,Helvetica FONT_TITLE 12p,Helvetica`;
 
-# Output directory (default is current directory)
-my $dir = ".";
+# Get arguments
+my $param_file = "./params.in";
 if (defined $ARGV[0]) {
-    $dir = $ARGV[0];
+    $param_file = $ARGV[0];
 }
 my $test_mode = 0;
 if (defined $ARGV[1] and $ARGV[1] eq "test") {
     $test_mode = 1;
 }
 
-# Input file names
-my $param_file = "$dir/params.in";
-my $nk_file    = "$dir/num_interface.ppd";
-my $sig_file   = "$dir/sigma.ppd";
-my $syn_file   = "$dir/syn_trace.ppd";
-my $vs_file    = "$dir/vs_z.ppd";
-my $vp_file    = "$dir/vp_z.ppd";
-
-
 # Read parameter file
 my %param = %{get_param($param_file)};
+
+# Input file names
+my $out_dir = $param{out_dir};
+my $nk_file    = "$out_dir/num_interface.ppd";
+my $sig_file   = "$out_dir/sigma.ppd";
+my $syn_file   = "$out_dir/syn_trace.ppd";
+my $vs_file    = "$out_dir/vs_z.ppd";
+my $vp_file    = "$out_dir/vp_z.ppd";
+
+
+
 
 # Layout
 #
@@ -96,7 +98,7 @@ my $yshift_vp = "0c";
 foreach my $itrc (1..$param{ntrc}) {
 
     # output file name
-    my $out = sprintf "$dir/plot.%02d.ps", $itrc;
+    my $out = sprintf "$out_dir/plot.%02d.ps", $itrc;
 
     # Number of layer interfaces
     system "gmt psxy $nk_file -Sb1u -W1.0 -Ggray "
@@ -283,14 +285,17 @@ foreach my $itrc (1..$param{ntrc}) {
 sub get_param {
     my $param_file = $_[0];
 
-    my $i = 0;
+    my $i = -1;
     my %param;
     open my $PARAM, "<", $param_file or die;
     while (my $line = <$PARAM>) {
 	chomp $line;
 	my @item = split q{ }, $line;
 	next if ($item[0] =~/^#/);
-	if ($i == 0) {
+	if ($i == -1) {
+	    $param{out_dir} = $item[0];
+	}
+	elsif ($i == 0) {
 	    $param{nburn} = $item[0];
 	}
 	elsif ($i == 1) {

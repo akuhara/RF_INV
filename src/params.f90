@@ -33,8 +33,12 @@ module params
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
   integer, parameter :: io_nk = 40, io_syn = 50, io_vpz = 60
   integer, parameter :: io_vsz = 70, io_z = 80, io_sig = 90
+  integer, parameter :: io_copy = 100
   integer, parameter :: npts_max = 2000, nlay_max = 200
-  
+
+  ! Output directory
+  character(clen_max) :: out_dir
+
   ! iteration
   integer :: nburn, niter, ncorr
   
@@ -84,7 +88,7 @@ contains
   subroutine get_params(verb, param_file)
     logical, intent(in) :: verb
     character(*), intent(in) :: param_file
-    character(100) :: line
+    character(clen_max) :: line, out_file
     integer :: ierr, itrc
     
     open(io_param, file = param_file, status = "old", iostat = ierr)
@@ -92,62 +96,91 @@ contains
        write(0,*)"ERROR: cannot open : params.in"
        stop
     end if
+
+    call get_line(io_param, line)
+    read(line,*) out_dir
     
+    out_file = trim(out_dir) // "/" // "params.in.copy"
+    open(io_copy, file = out_file, status = "unknown", iostat = ierr)
+    if (ierr /= 0) then
+       write(0,*)"ERROR: cannot create ", trim(out_file)
+       call mpi_finalize(ierr)
+       stop
+    end if
+
+    write(io_copy, *) trim(out_dir)
+
     call get_line(io_param, line)
     read(line,*) nburn
+    write(io_copy, *) nburn
 
     call get_line(io_param, line)
     read(line,*) niter
-
+    write(io_copy, *) niter
+    
     call get_line(io_param, line)
     read(line,*) ncorr
+    write(io_copy, *) ncorr
     
     call get_line(io_param, line)
     read(line,*) nchains
-
+    write(io_copy, *) nchains
+    
     call get_line(io_param, line)
     read(line,*) ncool
-
+    write(io_copy, *) ncool
+    
     call get_line(io_param, line)
     read(line,*) t_high
-
+    write(io_copy, *) t_high
+    
     call get_line(io_param, line)
     read(line,*) iseed
-
+    write(io_copy, *) iseed
+    
     call get_line(io_param, line)
     read(line,*) ntrc
+    write(io_copy, *) ntrc
     
     call allocate_trace_num()
     
     do itrc = 1, ntrc
        call get_line(io_param, line)
        read(line,*) rayps(itrc)
+       write(io_copy, *) rayps(itrc)
     end do
     
     do itrc = 1, ntrc
        call get_line(io_param, line)
        read(line,*) a_gus(itrc)
+       write(io_copy, *) a_gus(itrc)
     end do
     
     call get_line(io_param, line)
     read(line,*) nfft
-       
+    write(io_copy, *) nfft
+    
     do itrc = 1, ntrc
        call get_line(io_param, line)
        read(line,*) obs_files(itrc)
+       write(io_copy, *) trim(obs_files(itrc))
     end do
 
     call get_line(io_param, line)
     read(line,*) t_start, t_end
+    write(io_copy, *) t_start, t_end
 
     call get_line(io_param, line)
     read(line,*) sdep
+    write(io_copy, *) sdep
 
     call get_line(io_param, line)
     read(line,*) vel_file
+    write(io_copy, *) trim(vel_file)
 
     call get_line(io_param, line)
     read(line,*) vp_mode
+    write(io_copy, *) vp_mode
     if (vp_mode == 1) then
        ntype = 6
     else
@@ -156,57 +189,75 @@ contains
     
     call get_line(io_param, line)
     read(line,*) k_min, k_max
+    write(io_copy, *) k_min, k_max
 
     call get_line(io_param, line)
     read(line,*) z_min, z_max
+    write(io_copy, *) z_min, z_max
 
     call get_line(io_param, line)
     read(line,*) dvs_min, dvs_max
+    write(io_copy, *) dvs_min, dvs_max
 
     call get_line(io_param, line)
     read(line,*) dvp_min, dvp_max
+    write(io_copy, *) dvp_min, dvp_max
 
     call get_line(io_param, line)
     read(line,*) sig_min, sig_max
+    write(io_copy, *) sig_min, sig_max
     
     call get_line(io_param, line)
     read(line,*) dev_z
+    write(io_copy, *) dev_z
 
     call get_line(io_param, line)
     read(line,*) dev_dvs
+    write(io_copy, *) dev_dvs
     
     call get_line(io_param, line)
     read(line,*) dev_dvp
+    write(io_copy, *) dev_dvp
 
     call get_line(io_param, line)
     read(line,*) dev_sig
+    write(io_copy, *) dev_sig
 
     call get_line(io_param, line)
     read(line,*) nbin_z
+    write(io_copy, *) nbin_z
     
     call get_line(io_param, line)
     read(line,*) nbin_vs
+    write(io_copy, *) nbin_vs
     
     call get_line(io_param, line)
     read(line,*) nbin_vp
+    write(io_copy, *) nbin_vp
 
     call get_line(io_param, line)
     read(line,*) nbin_sig
+    write(io_copy, *) nbin_sig
 
     call get_line(io_param, line)
     read(line,*) nbin_amp
+    write(io_copy, *) nbin_amp
 
     call get_line(io_param, line)
     read(line,*) amp_min, amp_max
+    write(io_copy, *) amp_min, amp_max
 
     call get_line(io_param, line)
     read(line,*) vp_min, vp_max
+    write(io_copy, *) vp_min, vp_max
 
     call get_line(io_param, line)
     read(line,*) vs_min, vs_max
+    write(io_copy, *) vs_min, vs_max
 
     if (verb) then
        write(*,*)"--- Parameters --- "
+       write(*,*)"Output directory                       : ", trim(out_dir)
        write(*,*)"# of iteration in burn-in              : ", nburn
        write(*,*)"# of iteration after burn-in           : ", niter
        write(*,*)"# of iteration per sample              : ", ncorr
@@ -251,9 +302,8 @@ contains
        write(*,*)"Min./Max. Vs to be displayed           : ", vs_min, vs_max
        write(*,*)"Min./Max. Vp to be displayed           : ", vp_min, vp_max
     end if
-    
-
     close(io_param)
+    close(io_copy)
     return 
   end subroutine get_params
   
