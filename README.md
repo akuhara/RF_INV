@@ -13,7 +13,7 @@ There are many softwares and literatures for trans-dimensional inversion of rece
 * Applicable to OBS data
     * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
 * Multiple input traces
-    * You can asign different ray parameter and Gaussian-filter for each trace.    
+    * Can asign different ray parameter and Gaussian-filter for each trace.    
 * Parallel tempering
     * More efficient than conventional MCMC.
 
@@ -32,4 +32,8 @@ It is recommended to complie Open MPI with GNU fortran compiler (i.e, `gfortran`
 
 # How to install 
 
-`make`
+Use `make` in the root directory of this package. 
+
+# Manual
+
+
