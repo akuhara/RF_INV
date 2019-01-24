@@ -149,8 +149,8 @@ contains
              if (itarget2 /= itarget1) exit 
           end do
 
-          rank1 = int(itarget1 / nchains) + 1
-          rank2 = int(itarget2 / nchains) + 1
+          rank1 = int(itarget1 / nchains)
+          rank2 = int(itarget2 / nchains)
           ichain1 = mod(itarget1, nchains) + 1
           ichain2 = mod(itarget2, nchains) + 1
           

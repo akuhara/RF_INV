@@ -1,11 +1,11 @@
 # Output directory
-Debug
+KMB06
 # Iteration number in burn-in period
-1
+10000
 # Iteration number after burn-in
-100
+50000
 # Iteration number per sample
-1
+10
 # Number of chains per processor
 5
 # Number of non-tempered chains per processor
@@ -13,43 +13,43 @@ Debug
 # Highest temperature
 50.d0
 # Random number seed
-35663298
+56763298
 # Number of traces
 1
 # Ray parameter
-0.06
+0.059
 # Gaussian parameter
 8.0
 # Sample number used in FFT
 2048
 # Observed RF file
-test_trace01wn
+KMB06_120_150_a8.0_MC3.sac
 # Start/End time
 -1.0 10.0
 # Station depth (km)
-3.0
+2.499
 # Reference velocity file
-uni_vel
+KMB06.vel.formatted
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 15
+1 31
 # Min./Max. of interface depth
-3.0 20.0
+2.499 20.0
 # Min./Max. of dVs
--2.0 2.0
+-1.5 1.5
 # Min./Max. of dVp
 -2. 2.0
 # Min./Max. of noise sigma
-0.005 0.01
+0.005 0.08
 # standard deviation for depth proposal
-0.05
+0.03
 # standard deviation for dVs proposal
 0.02
 # standard deviation for dVp proposal
 0.02
 # standard deviation for noise sigma
-0.01
+0.005
 # Number of bins for depth
 100
 # Number of bins for Vs
@@ -61,7 +61,7 @@ uni_vel
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--1.0 1.0
+-0.6 0.6
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed

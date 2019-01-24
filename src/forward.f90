@@ -35,9 +35,13 @@ module forward
   complex(kind(0d0)), parameter, private :: ei = (0.d0, 1.d0)
   complex(kind(0d0)), allocatable, private :: layer_matrix(:,:,:,:,:,:)
 
+  logical :: is_rayp_common
+
   public init_forward, calc_rf
   private init_filter, init_layer_matrix, calc_seis, &
-       & e_inverse, layer_matrix_sol, layer_matrix_liq, water_level_decon
+       & e_inverse, layer_matrix_sol, layer_matrix_liq, &
+       & water_level_decon, check_rayp
+       
   
 contains
 
@@ -48,11 +52,48 @@ contains
     logical, intent(in) :: verb
     
     call init_filter()
+    call check_rayp(verb)
     !call init_layer_matrix(verb)
     
     return 
   end subroutine init_forward
     
+  !=====================================================================
+
+  subroutine check_rayp(verb)
+    use params, only: ntrc, rayps
+    implicit none 
+    logical, intent(in) :: verb
+    integer :: itrc
+    
+    is_rayp_common = .true.
+
+    if (ntrc > 1) then
+       if (verb) then
+          write(*,*) "--- check ray parameters ---"
+       end if
+       do itrc = 2, ntrc
+          if (rayps(itrc) /= rayps(1)) then
+             is_rayp_common = .false.
+          end if
+       end do
+    end if
+
+    if (verb .and. ntrc > 1) then
+       if (is_rayp_common) then
+          write(*,*) "Ray parameters are common among traces"
+          write(*,*) "-> Single FWD mode"
+          write(*,*)
+       else 
+          write(*,*) "Ray parameters are not common among traces"
+          write(*,*) "-> Multiple FWD mode"
+          write(*,*)
+       end if
+    end if
+
+    return 
+  end subroutine check_rayp
+
   !=====================================================================
     
   subroutine init_filter()
@@ -135,29 +176,28 @@ contains
 
     nh = n / 2 + 1
     do itrc = 1, ntrc
-
-       call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
-            & alpha, beta, rho, h, freq_r, freq_v)
-
-       ! Set upward positive
-       freq_r = conjg(freq_r)
-       freq_v = -conjg(freq_v)
        
-       call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
-
+       if (itrc == 1 .or. .not. is_rayp_common) then
+          call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
+               & alpha, beta, rho, h, freq_r, freq_v)
+          freq_r = conjg(freq_r)
+          freq_v = -conjg(freq_v) ! Set upward positive
+          call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
+       end if
+       
        ! filter
-       do i = 1, nh
-          rff(i) = rff(i) * flt(i, itrc)
-       end do
+       cx(1:nh) = rff(1:nh) * flt(1:nh, itrc)
+       cx(nh+1:n) = 0.d0
        
        ! Radial
-       cx(1:nh) = rff(1:nh)
-       cx(nh+1:n) = 0.d0
        call dfftw_execute(ifft)
        rft(1:n, itrc) = rx(1:n)
        
+
     end do
     
+
+
     return 
   end subroutine calc_rf  
   
@@ -368,6 +408,8 @@ contains
     do i = 1, n
        z(i) = y(i) * conjg(x(i))/ max(amp(i), wlvl)
     end do
+
+    !z(1:n) = y(1:n) / x(1:n)
     
     return
   end subroutine water_level_decon

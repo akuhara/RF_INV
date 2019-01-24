@@ -9,6 +9,15 @@ my $param_file = "./params.in";
 if (defined $ARGV[0]) {
     $param_file = $ARGV[0];
 }
+else {
+    print STDERR "\n";
+    print STDERR "USAGE: perl plot.pl [param.in] (test)\n";
+    print STDERR "\n";
+    print STDERR " NOTE: This program is assumed to be called at" .
+	" working directory of inversion\n";
+    print STDERR "\n";
+    exit;
+}
 my $test_mode = 0;
 if (defined $ARGV[1] and $ARGV[1] eq "test") {
     $test_mode = 1;
@@ -51,11 +60,11 @@ my $xlabel_sig = "Noise \@~s\@~";;
 my $ylabel_sig = "Probability";
 my $xshift_sig = "10c";
 my $yshift_sig = "0c";
-#
+# Synthetic 
 my $width_syn = "10c";
 my $hight_syn = "4c";
-my $ymin_syn  = -1.2;
-my $ymax_syn  = 1.2;
+my $ymin_syn  = -0.4;
+my $ymax_syn  = 0.4;
 my $zmin_syn  = 0.0;
 my $zmax_syn  = 0.2;
 my $xtic_syn  = "2f1";

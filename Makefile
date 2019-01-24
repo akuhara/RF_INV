@@ -2,12 +2,12 @@ MF90 = mpifort
 
 #--------------
 # For fast computation
-#FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
+FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 #--------------
 
 #--------------
 # For debug
-FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
+#FFLAGS = -pg -Wall -pedantic -std=f95 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 
 #--------------
