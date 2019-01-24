@@ -34,6 +34,12 @@ It is recommended to complie Open MPI with GNU fortran compiler (i.e, `gfortran`
 
 Use `make` in the root directory of this package. 
 
-# Manual
+# Input files
+
+## Parameter file (params.in)
+
+```
+
+```
 
 
