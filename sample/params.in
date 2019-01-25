@@ -1,5 +1,5 @@
 # Output directory
-KMB06
+KMB06_AW
 # Iteration number in burn-in period
 10000
 # Iteration number after burn-in
@@ -13,17 +13,23 @@ KMB06
 # Highest temperature
 50.d0
 # Random number seed
-56763298
+4213298
 # Number of traces
-1
+3
 # Ray parameter
+0.059
+0.059
 0.059
 # Gaussian parameter
 8.0
+4.0
+1.0
 # Sample number used in FFT
 2048
 # Observed RF file
-KMB06_120_150_a8.0_MC3.sac
+KMB06_120_150_a8.0_AW.sac
+KMB06_120_150_a4.0_AW.sac
+KMB06_120_150_a1.0_AW.sac
 # Start/End time
 -1.0 10.0
 # Station depth (km)
@@ -35,13 +41,13 @@ KMB06.vel.formatted
 # Min./Max. # of interfaces
 1 31
 # Min./Max. of interface depth
-2.499 20.0
+2.499 25.0
 # Min./Max. of dVs
 -1.5 1.5
 # Min./Max. of dVp
--2. 2.0
+-2.0 2.0
 # Min./Max. of noise sigma
-0.005 0.08
+0.01 0.2
 # standard deviation for depth proposal
 0.03
 # standard deviation for dVs proposal
@@ -61,7 +67,7 @@ KMB06.vel.formatted
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--0.6 0.6
+-1.0 1.0
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed

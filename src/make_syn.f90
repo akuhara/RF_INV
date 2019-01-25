@@ -71,21 +71,40 @@ program make_syn
   
   ! Add noise
   allocate(noise(nfft, ntrc), noise_sigma(ntrc))
-  do itrc = 1, ntrc
-     noise_sigma(itrc) = grnd() * (sig_max - sig_min) + sig_min
+
+  
+  if (is_rayp_common) then
+     noise_sigma(1) = grnd() * (sig_max - sig_min) + sig_min
      do it = 1, nfft
-        noise(it, itrc) = gauss() * noise_sigma(itrc)
+        noise(it, 1) = gauss() * noise_sigma(1)
      end do
      
-     rx(1:nfft) = noise(1:nfft, itrc)
-     call dfftw_execute(ifft2)
-     cx(1:nfft/2+1) = cx(1:nfft/2+1) * flt(1:nfft/2+1, itrc)
-     call dfftw_execute(ifft)
-     noise(1:nfft, itrc) = rx(1:nfft)
+     do itrc = 1, ntrc
+        rx(1:nfft) = noise(1:nfft, 1)
+        call dfftw_execute(ifft2)
+        cx(1:nfft/2+1) = cx(1:nfft/2+1) * flt(1:nfft/2+1, itrc)
+        call dfftw_execute(ifft)
+        noise(1:nfft, itrc) = rx(1:nfft)
+     end do
      
-     write(*,*)"Noise level of trace ", itrc, ":", noise_sigma(itrc)
-  end do
-
+     write(*,*)"Noise level of all traces: ", noise_sigma(1)
+     
+  else
+     do itrc = 1, ntrc
+        noise_sigma(itrc) = grnd() * (sig_max - sig_min) + sig_min
+        do it = 1, nfft
+           noise(it, itrc) = gauss() * noise_sigma(itrc)
+        end do
+        
+        rx(1:nfft) = noise(1:nfft, itrc)
+        call dfftw_execute(ifft2)
+        cx(1:nfft/2+1) = cx(1:nfft/2+1) * flt(1:nfft/2+1, itrc)
+        call dfftw_execute(ifft)
+        noise(1:nfft, itrc) = rx(1:nfft)
+        
+        write(*,*)"Noise level of trace ", itrc, ":", noise_sigma(itrc)
+     end do
+  end if
 
   ! output to SAC
   do itrc = 1, ntrc
