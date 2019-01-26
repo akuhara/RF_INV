@@ -159,7 +159,9 @@ KMB06.vel.formatted
 # Output
 
 ## num_interface.ppd
+
 Posterior probability distribution of the number of layer interfaces. 
+
 |1st column| 2nd column|
 |:--:|:--:|
 |# of layer interfaces|Probability|
