@@ -48,8 +48,13 @@ Use `make` in the root directory of this package.
 A parameter file, in which other input files and tuning parameters are specified, must exist in the current directory with the name 'params.in'. In the parameter file, all parameters must apper in the exact order as shown in the example below. Note that lines begining with '#' are ignored.  
 ```
 # Example of parameter file for RF_INV (params.in)
+#
 # Output directory (must exist)
 Out
+#
+#---------------------------------------------------------
+# Iteration
+#---------------------------------------------------------
 # Iteration number in burn-in period
 10000
 # Iteration number after burn-in
@@ -64,6 +69,10 @@ Out
 50.0
 # Random number seed
 56763298
+#
+#---------------------------------------------------------
+# Input Data
+#---------------------------------------------------------
 # Number of input waveforms
 3
 # Ray parameter (s/km) (* Need to repeat as many time as the number of input waveforms) 
@@ -93,15 +102,19 @@ KMB06_120_150_a8.0_MC3.sac
 #    Format: z(km)  Vp(km/s)  Vs(km/s)
 #    Note: Need evenly spaced grids in depth
 KMB06.vel.formatted
+#
+#---------------------------------------------------------
+# Inversion mode
+#---------------------------------------------------------
 # Vp mode (0: Fixed at reference model, 1: Solved)
 0
 #
-# Tuning parameter for prior probability 
-#
-# Min./Max. # of interfaces
+#---------------------------------------------------------
+# Prior probability 
+#---------------------------------------------------------
+# Min./Max. # of interfaces [min., max.)
 1 31
-# Min./Max. of interface depth (km)
-#    Note: Min. interface depth shold be equal to station depth
+# Min./Max. of interface depth (km; below sea surface)
 2.499 20.0
 # Min./Max. of dVs (km/s)
 -1.5 1.5
@@ -109,6 +122,10 @@ KMB06.vel.formatted
 -2. 2.0
 # Min./Max. of noise sigma
 0.005 0.08
+#
+#---------------------------------------------------------
+# Proposal
+#---------------------------------------------------------
 # standard deviation for depth proposal
 0.03
 # standard deviation for dVs proposal
@@ -117,6 +134,10 @@ KMB06.vel.formatted
 0.02
 # standard deviation for noise sigma
 0.005
+#
+#---------------------------------------------------------
+# Figure
+#---------------------------------------------------------
 # Number of bins for depth
 100
 # Number of bins for Vs
@@ -135,4 +156,17 @@ KMB06.vel.formatted
 0.001 5.0
 ```
 
+# Output
+
+## num_interface.ppd
+Posterior probability distribution of the number of layer interfaces. 
+|1st column| 2nd column|
+|:--:|:--:|
+|# of layer interfaces|Probability|
+
+## vs_z.ppd
+
+## vp_z.ppd
+
+## sigma.ppd
 
