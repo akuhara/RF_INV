@@ -35,9 +35,15 @@ It is recommended to complie Open MPI with GNU fortran compiler (i.e, `gfortran`
 Use `make` in the root directory of this package. An executable files `rf_inv` will be created under `bin` directory. 
 
 # How to run
+
 Use `mpirun` because this program requires parallel computation.
+
+#### Example
+
 `mpirun -np <N_proc> rf_inv`
+
 * N_proc = Number of processes
+
 * Each process has multiple McMC chains that are interacts each other through parallel tempering scheme. 
 
 ---
