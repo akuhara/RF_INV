@@ -39,11 +39,8 @@ Use `make` in the root directory of this package. An executable files `rf_inv` w
 Use `mpirun` because this program requires parallel computation.
 
 #### Example
-
 `mpirun -np <N_proc> rf_inv`
-
 * N_proc = Number of processes
-
 * Each process has multiple McMC chains that are interacts each other through parallel tempering scheme. 
 
 ---
