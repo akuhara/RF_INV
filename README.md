@@ -46,6 +46,9 @@ Use `make` in the root directory of this package.
 
 ### Parameter file (params.in)
 A parameter file, in which other input files and tuning parameters are specified, must exist in the current directory with the name 'params.in'. In the parameter file, all parameters must apper in the exact order as shown in the example below. Note that lines begining with '#' are ignored.  
+
+#### Example
+
 ```
 # Example of parameter file for RF_INV (params.in)
 #
@@ -156,19 +159,21 @@ KMB06.vel.formatted
 0.001 5.0
 ```
 
-# Output
+## Output files
 
-## num_interface.ppd
+### num_interface.ppd
 
 Posterior probability distribution of the number of layer interfaces. 
+
+#### Format 
 
 |1st column| 2nd column|
 |:--:|:--:|
 |# of layer interfaces|Probability|
 
-## vs_z.ppd
+### vs_z.ppd
 
-## vp_z.ppd
+### vp_z.ppd
 
-## sigma.ppd
+### sigma.ppd
 
