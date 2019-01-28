@@ -19,7 +19,7 @@ There are many softwares and literatures for trans-dimensional inversion of rece
 
 # Terms of Use
 * Please clarify the URL of the GitHub repository (https://github.com/akuhara/RF_INV) and developer's name (Takeshi Akuhara) when you make any presentation or publish articles using this program.
-* This program is licensed under the　GNU General Public License v3.0.
+* This program is licensed under the GNU General Public License v3.0.
 
 # Requirement
 
