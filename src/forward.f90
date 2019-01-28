@@ -33,15 +33,13 @@ module forward
   !
   real(8), parameter, private :: pi = 3.1415926535897931d0
   complex(kind(0d0)), parameter, private :: ei = (0.d0, 1.d0)
-  complex(kind(0d0)), allocatable, private :: layer_matrix(:,:,:,:,:,:)
 
   logical :: is_rayp_common
 
   public init_forward, calc_rf
-  private init_filter, init_layer_matrix, calc_seis, &
+  private init_filter, calc_seis, &
        & e_inverse, layer_matrix_sol, layer_matrix_liq, &
        & water_level_decon, check_rayp
-       
   
 contains
 
@@ -53,7 +51,6 @@ contains
     
     call init_filter()
     call check_rayp(verb)
-    !call init_layer_matrix(verb)
     
     return 
   end subroutine init_forward
@@ -97,12 +94,11 @@ contains
   !=====================================================================
     
   subroutine init_filter()
-    use params, only: a_gus, ntrc, nfft, delta, t_start
+    use params, only: a_gus, ntrc, nfft, delta
     implicit none 
     integer :: itrc, i, nh
     real(8) :: df, fac_norm, omega
-    complex(kind(0d0)) :: fac_shift
-
+    
     nh = nfft / 2 + 1
     df = 1.d0 / (delta * nfft)
 
@@ -112,10 +108,9 @@ contains
        fac_norm = nfft * a_gus(itrc) * delta / sqrt(pi)
        do i = 1, nh
           omega = (i - 1) * 2.d0 * pi * df
-          fac_shift = exp(ei* (omega + 2.d0 * pi * df) * t_start)
+          
           flt(i, itrc) &
-               & = exp(-(omega / (2.d0 * a_gus(itrc)))**2) * &
-               & fac_shift / fac_norm
+               & = exp(-(omega / (2.d0 * a_gus(itrc)))**2) / fac_norm
           
        end do
     end do
@@ -123,47 +118,13 @@ contains
 
     return 
   end subroutine init_filter
-
-  !=====================================================================  
   
-  subroutine init_layer_matrix(verb)
-    use model
-    use params
-    implicit none 
-    logical, intent(in) :: verb
-    integer :: itrc, ilay, iomg, nlay
-    real(8) :: domg, omega
-    real(8) :: alpha(nlay_max), beta(nlay_max)
-    real(8) :: h(nlay_max), rho(nlay_max)
-    integer :: ichain
-
-    allocate(layer_matrix(4, 4, nlay_max, nfft/2+1, ntrc, nchains))
-    
-    do ichain = 1, nchains
-       call format_model(k(ichain), z(:,ichain), &
-            & dvp(:,ichain), dvs(:,ichain), &
-            & nlay, alpha, beta, rho, h)
-       
-       domg = 2.d0 * pi / (nfft * delta)
-       do itrc = 1, ntrc
-          do iomg = 2, nfft/2 + 1
-             omega = (iomg - 1) * domg
-             do ilay = 1, nlay
-                call layer_matrix_sol(omega, rho(ilay), alpha(ilay), &
-                     & beta(ilay), rayps(itrc), h(ilay), &
-                     & layer_matrix(:, :, ilay, iomg, itrc, ichain))
-                
-             end do
-          end do
-       end do
-    end do
-
-  end subroutine init_layer_matrix
   !=====================================================================
   
-  subroutine calc_rf(chain_id, nlay, n, ntrc, rayps, alpha, beta, rho, h, rft)
+  subroutine calc_rf(chain_id, nlay, n, ntrc, rayps, &
+       & alpha, beta, rho, h, rft)
     use fftw
-    use params, only : delta, a_gus
+    use params, only : delta, a_gus, deconv_mode, t_start
     implicit none 
     integer, intent(in) :: nlay, n, ntrc, chain_id
     real(8), intent(in) :: rayps(ntrc)
@@ -172,39 +133,56 @@ contains
     real(8), intent(out) :: rft(n, ntrc)
     complex(kind(0d0)) :: freq_r(n), freq_v(n)
     complex(kind(0d0)) :: rff(n)
-    integer :: nh, itrc, i
+    integer :: nh, itrc, i, npre
 
     nh = n / 2 + 1
+    rff = (0.d0, 0.d0)
+    npre = nint(-t_start / delta)
     do itrc = 1, ntrc
        
        if (itrc == 1 .or. .not. is_rayp_common) then
           call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
                & alpha, beta, rho, h, freq_r, freq_v)
+          
           freq_r = conjg(freq_r)
           freq_v = -conjg(freq_v) ! Set upward positive
-          call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
+          
+          if (deconv_mode == 1) then
+             call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
+          else
+             rff(1:nh) = freq_r(1:nh)
+          end if
        end if
        
        ! filter
        cx(1:nh) = rff(1:nh) * flt(1:nh, itrc)
+       
        cx(nh+1:n) = 0.d0
        
        ! Radial
        call dfftw_execute(ifft)
-       rft(1:n, itrc) = rx(1:n)
        
+       do i = 1, npre
+          rft(i, itrc) = rx(nfft - npre + i)
+       end do
+       do i = npre + 1, nfft
+          rft(i, itrc) = rx(i - npre)
+       end do
+       do i = 1, nfft
+          write(999,*)(i-1) * delta +t_start, rft(i,itrc)
 
+       end do
+       call mpi_finalize(nh)
+       stop
     end do
     
-
-
     return 
   end subroutine calc_rf  
   
   !=====================================================================
   
-  subroutine calc_seis (trc_id, chain_id, nlay, npts, rayp, ipha, &
-       & alpha, beta, rho, h, ur_freq, uz_freq)
+  subroutine calc_seis(trc_id, chain_id, nlay, npts, &
+       & rayp, ipha, alpha, beta, rho, h, ur_freq, uz_freq)
     use params, only: delta
     implicit none
     integer, intent(in) :: nlay, ipha, npts, trc_id, chain_id
@@ -216,7 +194,8 @@ contains
     integer :: iomg, nhalf, ilay0, ilay, j, l
     logical :: sea_flag
     complex(kind(0d0)) :: e_inv(4,4), p_prod(4,4), sl(4,4), lq(2,2)
-    complex(kind(0d0)) :: denom, a, b, p_mat2(4,4)
+    complex(kind(0d0)) :: denom, a, b, p_mat(4,4)
+    
     
     ! Check Whether ocean layer exists
     if (beta(1) < 0) then
@@ -251,12 +230,8 @@ contains
        end do
        do ilay = ilay0, nlay - 1
           call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
-               & beta(ilay), rayp, h(ilay), &
-                     & p_mat2)
-          p_prod = matmul(p_mat2, p_prod)
-          !p_prod = matmul( &
-          !     & layer_matrix(1:4, 1:4, ilay, iomg, trc_id, chain_id), &
-          !     & p_prod)
+               & beta(ilay), rayp, h(ilay), p_mat)
+          p_prod = matmul(p_mat, p_prod)
        end do
        sl = matmul(e_inv, p_prod)
 
@@ -287,7 +262,7 @@ contains
     
     return 
   end subroutine calc_seis
-  
+
   !=====================================================================
   !------------------------------------------------------------
   ! E_inverse (Aki & Richards, pp. 161, Eq. (5.71))
@@ -413,5 +388,28 @@ contains
     
     return
   end subroutine water_level_decon
+  
+  !---------------------------------------------------------------------
+
+  subroutine direct_P_arrival(nlay, h, v, rayp, tt)
+    implicit none 
+    integer, intent(in) :: nlay
+    real(8), intent(in) :: rayp, h(nlay), v(nlay)
+    real(8), intent(out) :: tt
+    integer :: i, i0
+    
+    tt = 0.d0
+    if (v(nlay) >= 0.d0) then
+       i0 = 1
+    else
+       i0 = 2 ! sea water
+    end if
+    do i = 1, nlay-1
+       tt = tt + h(i) * sqrt(1.d0 / (v(i)* v(i)) - rayp * rayp)
+    end do
+    
+    return 
+  end subroutine direct_P_arrival
+    
   
 end module forward

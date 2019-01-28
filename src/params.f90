@@ -59,9 +59,10 @@ module params
   real(8) :: sdep
 
   ! Receiver function
-  integer :: nfft
+  integer :: nfft, deconv_mode
   real(8), allocatable :: a_gus(:)
-  
+
+
   ! reference velocity
   character(clen_max) :: vel_file
   
@@ -169,7 +170,17 @@ contains
     call get_line(io_param, line)
     read(line,*) t_start, t_end
     write(io_copy, *) t_start, t_end
-
+    
+    call get_line(io_param, line)
+    read(line,*)deconv_mode
+    write(io_copy, *) deconv_mode
+    if (deconv_mode /= 0 .and. deconv_mode /= 1) then
+       write(0,*) "ERROR: deconv_mode must be either 0 or 1"
+       call mpi_finalize(ierr)
+       stop
+    end if
+    
+    
     call get_line(io_param, line)
     read(line,*) sdep
     write(io_copy, *) sdep

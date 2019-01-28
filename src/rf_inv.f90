@@ -43,12 +43,12 @@ program main
    call mpi_init(ierr)
    call mpi_comm_size(MPI_COMM_WORLD, nproc, ierr)
    call mpi_comm_rank(MPI_COMM_WORLD, rank,  ierr)
-   write(*,*)nproc, rank
-   if (nproc < 2) then
-      write(0,*)"ERROR: at least 2 processor is necesarry!"
-      call mpi_finalize(ierr)
-      stop
-   end if
+   !write(*,*)nproc, rank
+   !if (nproc < 2) then
+   !   write(0,*)"ERROR: at least 2 processor is necesarry!"
+   !   call mpi_finalize(ierr)
+   !   stop
+   !end if
 
    ! Set verbose mode for rank 0
    verb = .false.

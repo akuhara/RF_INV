@@ -1,49 +1,51 @@
 # Output directory
-KMB06_AW
+JS1304
 # Iteration number in burn-in period
-10000
+0
 # Iteration number after burn-in
-50000
+1
 # Iteration number per sample
-10
+1
 # Number of chains per processor
-5
+1
 # Number of non-tempered chains per processor
 1
 # Highest temperature
 50.d0
 # Random number seed
-4213298
+52056
 # Number of traces
-3
+3 
 # Ray parameter
-0.059
-0.059
-0.059
+0.06373
+0.06373
+0.06373
 # Gaussian parameter
-8.0
-4.0
+2.0
 1.0
+0.5
 # Sample number used in FFT
 2048
 # Observed RF file
-KMB06_120_150_a8.0_AW.sac
-KMB06_120_150_a4.0_AW.sac
-KMB06_120_150_a1.0_AW.sac
+'JS1304/JS1304_a2.0_baz135_165_dist45_75.r.rft'
+'JS1304/JS1304_a1.0_baz135_165_dist45_75.r.rft'
+'JS1304/JS1304_a0.5_baz135_165_dist45_75.r.rft'
 # Start/End time
--1.0 10.0
+-5.0 10.0
+# Forward computation mode (0: w/o deconv., 1: w/ deconv. )
+1
 # Station depth (km)
-2.499
+0.0
 # Reference velocity file
-KMB06.vel.formatted
+'uni_vel'
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 31
+1 2
 # Min./Max. of interface depth
-2.499 25.0
+0.0 30.0
 # Min./Max. of dVs
--1.5 1.5
+-2.5 2.5
 # Min./Max. of dVp
 -2.0 2.0
 # Min./Max. of noise sigma
