@@ -134,13 +134,9 @@ contains
     complex(kind(0d0)) :: freq_r(n), freq_v(n)
     complex(kind(0d0)) :: rff(n)
     real(8) :: tp, fac_norm
-    integer :: nh, itrc, i, npre
+    integer :: nh, itrc, i, npre, j
 
     nh = n / 2 + 1
-
-    do i = 1, nlay
-       write(*,*)alpha(i), beta(i), rho(i), h(i)
-    end do
 
     do itrc = 1, ntrc
        
@@ -172,13 +168,14 @@ contains
        npre = nint((-t_start - tp) / delta)
        
        ! Time shift
-       do i = 1, npre
-          rft(i, itrc) = rx(nfft - npre + i)
+       do i = 1, nfft
+          j = mod(nfft - npre + i, nfft)
+          if (j == 0) then
+             j = nfft
+          end if
+          rft(i, itrc) = rx(j)
        end do
-       do i = npre + 1, nfft
-          rft(i, itrc) = rx(i - npre)
-       end do
-
+       
        ! Normalizatoin by vertical (only case w/o deconvolution)
        if (deconv_mode == 0) then
           cx(1:nh) = freq_v(1:nh) * flt(1:nh, itrc)
@@ -187,7 +184,6 @@ contains
           fac_norm = maxval(rx)
           rft(:,itrc) = rft(:,itrc) / fac_norm
        end if
-
        
     end do
     
