@@ -32,7 +32,7 @@ The appropriate locations of the above libraries must be specified in `Makefile`
 
 * [Open MPI](https://www.open-mpi.org/)
 
-It is recommended to complie Open MPI with GNU fortran compiler (i.e, `gfortran`). In that case, you can use Makefile without changing compiler options.
+It is recommended to compile Open MPI with GNU Fortran compiler (i.e, `gfortran`). In that case, you can use Makefile without changing compiler options.
 
 # How to install 
 
