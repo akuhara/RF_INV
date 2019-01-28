@@ -13,7 +13,7 @@ JS1304
 # Highest temperature
 50.d0
 # Random number seed
-52056
+12477356
 # Number of traces
 3 
 # Ray parameter
@@ -25,7 +25,7 @@ JS1304
 1.0
 0.5
 # Sample number used in FFT
-2048
+9000
 # Observed RF file
 'JS1304/JS1304_a2.0_baz135_165_dist45_75.r.rft'
 'JS1304/JS1304_a1.0_baz135_165_dist45_75.r.rft'
@@ -33,7 +33,7 @@ JS1304
 # Start/End time
 -5.0 10.0
 # Forward computation mode (0: w/o deconv., 1: w/ deconv. )
-1
+0
 # Station depth (km)
 0.0
 # Reference velocity file

@@ -133,13 +133,19 @@ contains
     real(8), intent(out) :: rft(n, ntrc)
     complex(kind(0d0)) :: freq_r(n), freq_v(n)
     complex(kind(0d0)) :: rff(n)
+    real(8) :: tp, fac_norm
     integer :: nh, itrc, i, npre
 
     nh = n / 2 + 1
-    rff = (0.d0, 0.d0)
-    npre = nint(-t_start / delta)
+
+    do i = 1, nlay
+       write(*,*)alpha(i), beta(i), rho(i), h(i)
+    end do
+
     do itrc = 1, ntrc
        
+       
+
        if (itrc == 1 .or. .not. is_rayp_common) then
           call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
                & alpha, beta, rho, h, freq_r, freq_v)
@@ -149,31 +155,40 @@ contains
           
           if (deconv_mode == 1) then
              call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
+             tp = 0.d0
           else
              rff(1:nh) = freq_r(1:nh)
+             call direct_P_arrival(nlay, h(1:nlay), alpha(1:nlay), &
+                  & rayps(itrc), tp) 
           end if
        end if
        
        ! filter
        cx(1:nh) = rff(1:nh) * flt(1:nh, itrc)
+       cx(nh+1:n) = (0.d0, 0.d0)
        
-       cx(nh+1:n) = 0.d0
-       
-       ! Radial
+       ! IFFT
        call dfftw_execute(ifft)
+       npre = nint((-t_start - tp) / delta)
        
+       ! Time shift
        do i = 1, npre
           rft(i, itrc) = rx(nfft - npre + i)
        end do
        do i = npre + 1, nfft
           rft(i, itrc) = rx(i - npre)
        end do
-       do i = 1, nfft
-          write(999,*)(i-1) * delta +t_start, rft(i,itrc)
 
-       end do
-       call mpi_finalize(nh)
-       stop
+       ! Normalizatoin by vertical (only case w/o deconvolution)
+       if (deconv_mode == 0) then
+          cx(1:nh) = freq_v(1:nh) * flt(1:nh, itrc)
+          cx(nh+1:n) = (0.d0, 0.d0)
+          call dfftw_execute(ifft)
+          fac_norm = maxval(rx)
+          rft(:,itrc) = rft(:,itrc) / fac_norm
+       end if
+
+       
     end do
     
     return 
@@ -391,23 +406,23 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine direct_P_arrival(nlay, h, v, rayp, tt)
+  subroutine direct_P_arrival(nlay, h, v, rayp, t)
     implicit none 
     integer, intent(in) :: nlay
     real(8), intent(in) :: rayp, h(nlay), v(nlay)
-    real(8), intent(out) :: tt
+    real(8), intent(out) :: t
     integer :: i, i0
     
-    tt = 0.d0
+    t = 0.d0
     if (v(nlay) >= 0.d0) then
        i0 = 1
     else
        i0 = 2 ! sea water
     end if
     do i = 1, nlay-1
-       tt = tt + h(i) * sqrt(1.d0 / (v(i)* v(i)) - rayp * rayp)
+       t = t + h(i) * sqrt(1.d0 / (v(i)* v(i)) - rayp * rayp)
     end do
-    
+
     return 
   end subroutine direct_P_arrival
     
