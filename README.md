@@ -53,7 +53,7 @@ See our [Wiki](https://github.com/akuhara/RF_INV/wiki) for details.
 ## Input files
 
 ### Parameter file (params.in)
-A parameter file, in which other input files and tuning parameters are specified, must exist in the current directory with the name 'params.in'. In the parameter file, all parameters must apper in the exact order as shown in the example below. Note that lines begining with '#' are ignored.  
+A parameter file, in which other input files and tuning parameters are specified, must exist in the current directory with the name 'params.in'. In the parameter file, all parameters must appear in the exact order as shown in the example below. Note that lines beginning with '#' are ignored.  
 
 #### Example
 
@@ -87,8 +87,8 @@ Out
 # Number of input waveforms
 3
 # Ray parameter (s/km) (* Need to repeat as many time as the number of input waveforms) 
-#     Note: If ray parameters are common for all input waveforms, then forward computation occur only once.
-#           Otherwise, the computation are repeated as many times as the number of input. 
+#     Note: If ray parameters are common for all input waveforms, then forward computation occurs only once.
+#           Otherwise, the computation is repeated as many times as the number of input. 
 0.06
 0.06
 0.06
