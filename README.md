@@ -47,6 +47,9 @@ Use `mpirun` because this program requires parallel computation.
 
 # Instruction
 
+## Theory
+See our [Wiki](https://github.com/akuhara/RF_INV/wiki) for details. 
+
 ## Input files
 
 ### Parameter file (params.in)
@@ -167,18 +170,42 @@ KMB06.vel.formatted
 ## Output files
 
 ### num_interface.ppd
-
-Posterior probability distribution of the number of layer interfaces. 
+The marginal posterior probability distribution of the number of layer interfaces. 
 
 #### Format 
-
 |1st column| 2nd column|
 |:--:|:--:|
 |# of layer interfaces|Probability|
 
+### interface_depth.ppd
+The marginal posterior probability distribution of interface depths.  
+
+#### Format
+|1st column| 2nd column|
+|:--:|:--:|
+|Depth (km)|Probability|
+
 ### vs_z.ppd
+The marginal posterior probability distribution of S-wave velocity profile.
+
+#### Format 
+|1st column| 2nd column| 3rd column|
+|:--:|:--:|:--:|
+|Vs (km/s)|Depth (km)|Probability|
 
 ### vp_z.ppd
+The marginal posterior probability distribution of P-wave velocity profile.
+
+#### Format 
+|1st column| 2nd column| 3rd column|
+|:--:|:--:|:--:|
+|Vp (km/s)|Depth (km)|Probability|
 
 ### sigma.ppd
+The marginal posterior probability distribution of noise standard deviation.
+
+#### Format
+|1st column| 2nd column|
+|:--:|:--:|
+|Standard deviation|Probability|
 
