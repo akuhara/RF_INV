@@ -1,13 +1,13 @@
 # Output directory
 KMB06_MC3
 # Iteration number in burn-in period
-1000
+10000
 # Iteration number after burn-in
-5000
+50000
 # Iteration number per sample
 1
 # Number of chains per processor
-1
+5
 # Number of non-tempered chains per processor
 1
 # Highest temperature
@@ -25,21 +25,21 @@ KMB06_MC3
 # Observed RF file
 KMB06_120_150_a8.0_MC3.sac
 # Start/End time
--3.0 10.0
+0.0 5.0
 # Forward computation mode (0: w/o deconv., 1: w/ deconv. )
-1
+0
 # Station depth (km)
-0.0
+2.499
 # Reference velocity file
-uni_vel
+KMB06.vel.formatted
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
 1 31
 # Min./Max. of interface depth
-0.0 30.0
+2.499 30.0
 # Min./Max. of dVs
--1.5 1.5
+-3.0 3.0
 # Min./Max. of dVp
 -2.0 2.0
 # Min./Max. of noise sigma
@@ -63,7 +63,7 @@ uni_vel
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--1.0 1.0
+-0.6 0.6
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed

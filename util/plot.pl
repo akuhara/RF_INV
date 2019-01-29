@@ -348,63 +348,66 @@ sub get_param {
 	    ($param{t_start}, $param{t_end}) = @item[0,1];
 	}
 	elsif ($i == 13) {
-	    $param{sdep} = $item[0];
+	    $param{deconv_mode} = $item[0];
 	}
 	elsif ($i == 14) {
-	    $param{vel_ref_file} = $item[0];
+	    $param{sdep} = $item[0];
 	}
 	elsif ($i == 15) {
-	    $param{vp_mode} = $item[0];
+	    $param{vel_ref_file} = $item[0];
 	}
 	elsif ($i == 16) {
-	    ($param{k_min}, $param{k_max}) = @item[0,1];
+	    $param{vp_mode} = $item[0];
 	}
 	elsif ($i == 17) {
-	    ($param{z_min}, $param{z_max}) = @item[0,1];
+	    ($param{k_min}, $param{k_max}) = @item[0,1];
 	}
 	elsif ($i == 18) {
-	    ($param{dvs_min}, $param{dvs_max}) = @item[0,1];
+	    ($param{z_min}, $param{z_max}) = @item[0,1];
 	}
 	elsif ($i == 19) {
-	    ($param{dvp_min}, $param{dvp_max}) = @item[0,1];
+	    ($param{dvs_min}, $param{dvs_max}) = @item[0,1];
 	}
 	elsif ($i == 20) {
-	    ($param{sig_min}, $param{sig_max}) = @item[0,1];
+	    ($param{dvp_min}, $param{dvp_max}) = @item[0,1];
 	}
 	elsif ($i == 21) {
-	    $param{dev_z} = $item[0];
+	    ($param{sig_min}, $param{sig_max}) = @item[0,1];
 	}
 	elsif ($i == 22) {
-	    $param{dev_dvs} = $item[0];
+	    $param{dev_z} = $item[0];
 	}
 	elsif ($i == 23) {
-	    $param{dev_dvp} = $item[0];
+	    $param{dev_dvs} = $item[0];
 	}
 	elsif ($i == 24) {
-	    $param{dev_sig} = $item[0];
+	    $param{dev_dvp} = $item[0];
 	}
 	elsif ($i == 25) {
-	    $param{nbin_z} = $item[0];
+	    $param{dev_sig} = $item[0];
 	}
 	elsif ($i == 26) {
-	    $param{nbin_vs} = $item[0];
+	    $param{nbin_z} = $item[0];
 	}
 	elsif ($i == 27) {
-	    $param{nbin_vp} = $item[0];
+	    $param{nbin_vs} = $item[0];
 	}
 	elsif ($i == 28) {
-	    $param{nbin_sig} = $item[0];
+	    $param{nbin_vp} = $item[0];
 	}
 	elsif ($i == 29) {
-	    $param{nbin_amp} = $item[0];
+	    $param{nbin_sig} = $item[0];
 	}
 	elsif ($i == 30) {
-	    ($param{amp_min}, $param{amp_max}) = @item[0,1];
+	    $param{nbin_amp} = $item[0];
 	}
 	elsif ($i == 31) {
-	    ($param{vp_min}, $param{vp_max}) = @item[0,1];
+	    ($param{amp_min}, $param{amp_max}) = @item[0,1];
 	}
 	elsif ($i == 32) {
+	    ($param{vp_min}, $param{vp_max}) = @item[0,1];
+	}
+	elsif ($i == 33) {
 	    ($param{vs_min}, $param{vs_max}) = @item[0,1];
 	}
 	$i ++;
