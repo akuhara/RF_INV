@@ -16,6 +16,8 @@ There are many softwares and literatures for trans-dimensional inversion of rece
     * Can asign different ray parameter and Gaussian-filter for each trace.    
 * Parallel tempering
     * More efficient than conventional MCMC.
+    
+See [Wiki](https://github.com/akuhara/RF_INV/wiki) for more details.
 
 # Terms of Use
 * Please clarify the URL of the GitHub repository (https://github.com/akuhara/RF_INV) and developer's name (Takeshi Akuhara) when you make any presentation or publish articles using this program.
@@ -52,7 +54,7 @@ Use `mpirun` because this program requires parallel computation.
 # Instruction
 
 ## Theory
-See our [Wiki](https://github.com/akuhara/RF_INV/wiki) for details. 
+See [Wiki](https://github.com/akuhara/RF_INV/wiki) for details. 
 
 ## Input files
 
