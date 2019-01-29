@@ -40,4 +40,4 @@ It is recommended to compile Open MPI with GNU Fortran compiler (i.e, `gfortran`
 
 # Manual 
 
-Check [Wiki](https://github.com/akuhara/RF_INV/wiki).
+A manual is available [here](https://github.com/akuhara/RF_INV/wiki).
