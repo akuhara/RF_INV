@@ -144,8 +144,10 @@ contains
        !end if
     end if
     
-    call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
+    if (.not. null_flag) then
+       call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
             & nlay, alpha, beta, rho, h, is_valid)
+    end if
     if (.not. is_valid) then
        null_flag = .true.
     end if

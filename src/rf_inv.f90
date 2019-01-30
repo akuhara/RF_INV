@@ -79,8 +79,6 @@ program main
    
    call init_likelihood(verb)
    
-   
-   
    ! Initialize temperature
    call init_pt_mcmc(verb)
    
@@ -91,6 +89,7 @@ program main
    ! MCMC samping
    call pt_control(verb)
    
+
    !output
    call output_results(rank, verb)
    

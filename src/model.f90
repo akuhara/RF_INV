@@ -59,7 +59,7 @@ contains
     z   = 0.d0
     do ichain = 1, nchains
        k(ichain) = k_min + int(grnd() * (k_max - k_min))
-       
+       write(*,*)k(ichain)
        do i = 1, k(ichain)
           z(i, ichain) = z_min + grnd() * (z_max - z_min)
        end do
@@ -76,7 +76,7 @@ contains
           !dvp(k_max, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
           dvs(k_max, ichain) = gauss() * dvs_prior
           dvp(k_max, ichain) = gauss() * dvp_prior
-          
+
           call format_model(k(ichain), z(1:k_max-1, ichain), &
                & dvp(1:k_max, ichain), dvs(1:k_max, ichain), &
                & nlay, alpha, beta, rho, h, is_valid)
@@ -196,7 +196,6 @@ contains
     tmp_dvs = prop_dvs
     tmp_dvp = prop_dvp
 
-    
     call quick_sort(tmp_z(1:prop_k), 1, prop_k, &
          & tmp_dvp(1:prop_k), tmp_dvs(1:prop_k))
 
