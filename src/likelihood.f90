@@ -69,11 +69,11 @@ contains
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     real(8) :: misfits(nsmp), phi1(nsmp), phi, s
     real(8), parameter :: pi = 3.1415926535897931
-    
+    logical :: is_valid
     
     if (fwd_flag) then
        call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
-            & nlay, alpha, beta, rho, h)
+            & nlay, alpha, beta, rho, h, is_valid)
 
        call calc_rf(chain_id, nlay, nfft, ntrc, rayps, &
             & alpha, beta, rho, h, prop_rft)

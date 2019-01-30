@@ -181,18 +181,18 @@ foreach my $itrc (1..$param{ntrc}) {
 	my ($z_ref, $vp_ref, $vs_ref) = @item;
 	my $vs_c = $vs_ref;
 	my $vp_c = $vp_ref;
-	if ($vs_ref + $param{dvs_min} < $param{vs_min}) {
-	    $vs_c = $param{vs_min} - $param{dvs_min} 
-	}
-	elsif ($vs_ref + $param{dvs_max} > $param{vs_max}) {
-	    $vs_c = $param{vs_max} - $param{dvs_max};
-	}
-	if ($vp_ref + $param{dvp_min} < $param{vp_min}) {
-	    $vp_c = $param{vp_min} - $param{dvp_min} 
-	}
-	elsif ($vp_ref + $param{dvp_max} > $param{vp_max}) {
-	    $vp_c = $param{vp_max} - $param{dvp_max};
-	}
+	#if ($vs_ref + $param{dvs_min} < $param{vs_min}) {
+	#    $vs_c = $param{vs_min} - $param{dvs_min} 
+	#}
+	#elsif ($vs_ref + $param{dvs_max} > $param{vs_max}) {
+	#    $vs_c = $param{vs_max} - $param{dvs_max};
+	#}
+	#if ($vp_ref + $param{dvp_min} < $param{vp_min}) {
+	#    $vp_c = $param{vp_min} - $param{dvp_min} 
+	#}
+	#elsif ($vp_ref + $param{dvp_max} > $param{vp_max}) {
+	#    $vp_c = $param{vp_max} - $param{dvp_max};
+	#}
 	push @z_ref, $z_ref;
 	push @vp_ref, $vp_ref;
 	push @vs_ref, $vs_ref;
@@ -207,12 +207,12 @@ foreach my $itrc (1..$param{ntrc}) {
     close $VS_REF or die;
     open my $VS_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VS_REF_LOW} $vs_c[$i] + $param{dvs_min}, q{ }, $z_ref[$i],"\n";
+	print {$VS_REF_LOW} $vs_c[$i] - $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
     }
     close $VS_REF_LOW or die;
     open my $VS_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VS_REF_UP} $vs_c[$i] + $param{dvs_max}, q{ }, $z_ref[$i],"\n";
+	print {$VS_REF_UP} $vs_c[$i] + $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
     }
     close $VS_REF_UP or die;
     
@@ -256,12 +256,12 @@ foreach my $itrc (1..$param{ntrc}) {
     close $VP_REF or die;
     open my $VP_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VP_REF_LOW} $vp_c[$i] + $param{dvp_min}, q{ }, $z_ref[$i],"\n";
+	print {$VP_REF_LOW} $vp_c[$i] - $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
     }
     close $VP_REF_LOW or die;
     open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VP_REF_UP} $vp_c[$i] + $param{dvp_max}, q{ }, $z_ref[$i],"\n";
+	print {$VP_REF_UP} $vp_c[$i] + $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
     }
     close $VP_REF_UP or die;
     if ($test_mode) {
@@ -339,20 +339,25 @@ sub get_param {
 	    $param{nfft} = $item[0];
 	}
 	elsif ($i == 11) {
-	    push @{$param{obs_files}}, $item[0];
+	    (my $tmp = $item[0]) =~ s/'//g;
+	    push @{$param{obs_files}}, $tmp;
 	    next if (@{$param{obs_files}} < $param{ntrc});
 	}
 	elsif ($i == 12) {
 	    ($param{t_start}, $param{t_end}) = @item[0,1];
+	   
 	}
 	elsif ($i == 13) {
 	    $param{deconv_mode} = $item[0];
 	}
 	elsif ($i == 14) {
 	    $param{sdep} = $item[0];
+	    print "$line AAAAAAAAAAAAAA\n";
 	}
 	elsif ($i == 15) {
-	    $param{vel_ref_file} = $item[0];
+	    (my $tmp = $item[0]) =~ s/'//g;
+	    $param{vel_ref_file} = $tmp;
+	    print "$line DDDDDDDDDDDDDDDD\n";
 	}
 	elsif ($i == 16) {
 	    $param{vp_mode} = $item[0];
@@ -362,12 +367,13 @@ sub get_param {
 	}
 	elsif ($i == 18) {
 	    ($param{z_min}, $param{z_max}) = @item[0,1];
+	   
 	}
 	elsif ($i == 19) {
-	    ($param{dvs_min}, $param{dvs_max}) = @item[0,1];
+	    $param{dvs_prior} =  $item[0];
 	}
 	elsif ($i == 20) {
-	    ($param{dvp_min}, $param{dvp_max}) = @item[0,1];
+	    $param{dvp_prior} =  $item[0];
 	}
 	elsif ($i == 21) {
 	    ($param{sig_min}, $param{sig_max}) = @item[0,1];

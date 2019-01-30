@@ -73,7 +73,8 @@ module params
   ! prior
   integer :: k_min, k_max
   real(8) :: z_min, z_max
-  real(8) :: dvs_min, dvs_max, dvp_min, dvp_max
+  !real(8) :: dvs_min, dvs_max, dvp_min, dvp_max
+  real(8) :: dvs_prior, dvp_prior
   real(8) :: sig_min, sig_max
   
   ! proposal
@@ -163,7 +164,7 @@ contains
     
     do itrc = 1, ntrc
        call get_line(io_param, line)
-       read(line,'(a)') obs_files(itrc)
+       read(line,*) obs_files(itrc)
        write(io_copy, *) trim(obs_files(itrc))
     end do
 
@@ -186,7 +187,7 @@ contains
     write(io_copy, *) sdep
 
     call get_line(io_param, line)
-    read(line,'(a)') vel_file
+    read(line,*) vel_file
     write(io_copy, *) trim(vel_file)
 
     call get_line(io_param, line)
@@ -207,12 +208,12 @@ contains
     write(io_copy, *) z_min, z_max
 
     call get_line(io_param, line)
-    read(line,*) dvs_min, dvs_max
-    write(io_copy, *) dvs_min, dvs_max
+    read(line,*) dvs_prior
+    write(io_copy, *) dvs_prior
 
     call get_line(io_param, line)
-    read(line,*) dvp_min, dvp_max
-    write(io_copy, *) dvp_min, dvp_max
+    read(line,*) dvp_prior
+    write(io_copy, *) dvp_prior
 
     call get_line(io_param, line)
     read(line,*) sig_min, sig_max
@@ -298,8 +299,8 @@ contains
        write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
        write(*,*)"Min./Max. # of interfaces              : ", k_min, k_max
        write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
-       write(*,*)"Min./Max. of dVs prior                 : ", dvs_min, dvs_max
-       write(*,*)"Min./Max. of dVp prior                 : ", dvp_min, dvp_max
+       write(*,*)"Standard deviation for dVs prior       : ", dvs_prior
+       write(*,*)"Standard deviation for dVp prior       : ", dvp_prior
        write(*,*)"Min./Max. of noise sigma prior         : ", sig_min, sig_max
        write(*,*)"Standard deviation for depth proposal  : ", dev_z
        write(*,*)"Standard deviation for dVs proposal    : ", dev_dvs

@@ -39,6 +39,7 @@ program make_syn
   logical, parameter :: verb = .true.
   real(8), allocatable :: noise(:,:), noise_sigma(:)
   character(clen_max) :: out_sac
+  logical :: is_valid
 
   call get_params(verb, "params.in")
   
@@ -58,7 +59,7 @@ program make_syn
   
     
   call format_model(k(1), z(:,1), dvp(:,1), dvs(:,1), &
-       & nlay, alpha, beta, rho, h)
+       & nlay, alpha, beta, rho, h, is_valid)
 
   open(54, file = "test_vel", status = "unknown", iostat = ierr)
   if (ierr /= 0) then 

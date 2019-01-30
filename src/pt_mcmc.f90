@@ -44,20 +44,23 @@ contains
     use model
     use likelihood
     use forward
+    use prior
     use math
     implicit none 
     integer, intent(in) :: iter, ichain
     real(8), intent(in) :: temp
     real(8) :: prop_log_likelihood, prop_rft(nfft, ntrc)
+    real(8) :: log_prior12
     real(8) :: prop_dvp(k_max), prop_dvs(k_max), prop_z(k_max)
     real(8) :: prop_sig(ntrc), tmpz
     integer :: prop_k
     integer :: itype, itarget, ilay, ibin, iz1, iz2, itrc, iz
     integer :: ivp, ivs, it
-    logical :: null_flag, yn, fwd_flag
+    logical :: null_flag, yn, fwd_flag, is_valid
     integer :: nlay
     real(8) :: alpha(nlay_max), beta(nlay_max)
     real(8) :: h(nlay_max), rho(nlay_max)
+
     
     prop_k = k(ichain)
     prop_dvp(1:k_max)   = dvp(1:k_max, ichain)
@@ -74,8 +77,10 @@ contains
        ! Birth proposal
        prop_k = prop_k + 1
        if (prop_k < k_max) then
-          prop_dvp(prop_k) = dvp_min + grnd() * (dvp_max - dvp_min)
-          prop_dvs(prop_k) = dvs_min + grnd() * (dvs_max - dvs_min)
+          !prop_dvp(prop_k) = dvp_min + grnd() * (dvp_max - dvp_min)
+          !prop_dvs(prop_k) = dvs_min + grnd() * (dvs_max - dvs_min)
+          prop_dvp(prop_k) = gauss() * dvp_prior
+          prop_dvs(prop_k) = gauss() * dvs_prior
           prop_z(prop_k)   = z_min   + grnd() * (z_max   - z_min)
        else 
           null_flag = .true.
@@ -117,21 +122,33 @@ contains
        itarget = int(grnd() * (prop_k + 1)) + 1
        if (itarget == prop_k + 1) itarget = k_max
        prop_dvs(itarget) = prop_dvs(itarget) + gauss() * dev_dvs
-       if (prop_dvs(itarget) < dvs_min .or. &
-            & prop_dvs(itarget) > dvs_max) then
-          null_flag = .true.
-       end if
+       log_prior12 = &
+            & log_prior_ratio(prop_dvs(itarget), &
+            & dvs(itarget, ichain), dvs_prior)
+       !if (prop_dvs(itarget) < dvs_min .or. &
+       !     & prop_dvs(itarget) > dvs_max) then
+       !   null_flag = .true.
+       !end if
     else 
        ! Perturb dVp
        itarget = int(grnd() * (prop_k + 1)) + 1
        if (itarget == prop_k + 1) itarget = k_max
        prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
-       if (prop_dvp(itarget) < dvp_min .or. &
-            & prop_dvp(itarget) > dvp_max) then
-          null_flag = .true.
-       end if
+       log_prior12 = &
+            & log_prior_ratio(prop_dvp(itarget), &
+            & dvp(itarget, ichain), dvp_prior)
+
+       !if (prop_dvp(itarget) < dvp_min .or. &
+       !     & prop_dvp(itarget) > dvp_max) then
+       !   null_flag = .true.
+       !end if
     end if
     
+    call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
+            & nlay, alpha, beta, rho, h, is_valid)
+    if (.not. is_valid) then
+       null_flag = .true.
+    end if
     
     ! evaluate proposed model
     if (.not. null_flag) then
@@ -144,7 +161,7 @@ contains
             & prop_k, prop_z, prop_dvp, prop_dvs, &
             & prop_sig, prop_log_likelihood, prop_rft)
        call judge_mcmc(temp, log_likelihood(ichain), &
-            & prop_log_likelihood, yn)
+            & prop_log_likelihood, log_prior12, yn)
        if (yn) then
           log_likelihood(ichain) = prop_log_likelihood
           k(ichain)              = prop_k
@@ -188,7 +205,7 @@ contains
        ! V-z profile
        call format_model(k(ichain), z(1:k_max-1, ichain), &
             & dvp(1:k_max, ichain), dvs(1:k_max, ichain), &
-            & nlay, alpha, beta, rho, h)
+            & nlay, alpha, beta, rho, h, is_valid)
        tmpz = 0.d0
        do ilay = 1, nlay
           iz1 = int(tmpz / dbin_z) + 1
@@ -423,15 +440,15 @@ contains
   !---------------------------------------------------------------------
 
  
-  subroutine judge_mcmc(temp, log_lklh1, log_lklh2, yn)
+  subroutine judge_mcmc(temp, log_lklh1, log_lklh2, log_prior12, yn)
     use mt19937
     implicit none
-    real(8), intent(in) :: temp, log_lklh1, log_lklh2
+    real(8), intent(in) :: temp, log_lklh1, log_lklh2, log_prior12
     logical, intent(out) :: yn
     real(8) :: del_s
     
     yn = .false.
-    del_s = (log_lklh2 - log_lklh1) / temp
+    del_s = (log_lklh2 - log_lklh1) / temp + log_prior12
     
     if (log(grnd()) <= del_s) then
        yn = .true.
