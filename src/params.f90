@@ -163,7 +163,7 @@ contains
     
     do itrc = 1, ntrc
        call get_line(io_param, line)
-       read(line,*) obs_files(itrc)
+       read(line,'(a)') obs_files(itrc)
        write(io_copy, *) trim(obs_files(itrc))
     end do
 
@@ -186,7 +186,7 @@ contains
     write(io_copy, *) sdep
 
     call get_line(io_param, line)
-    read(line,*) vel_file
+    read(line,'(a)') vel_file
     write(io_copy, *) trim(vel_file)
 
     call get_line(io_param, line)
@@ -291,6 +291,7 @@ contains
        end do
        write(*,*)"Start/End time                         : ", t_start, &
             & t_end
+       write(*,*)"Forward computation mode               : ", deconv_mode
        write(*,*)"Sample number used in FFT              : ", nfft
        write(*,*)"Station depth                          : ", sdep
        write(*,*)"Reference velocity file                : ", trim(vel_file)

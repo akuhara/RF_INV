@@ -5,7 +5,7 @@ KMB06_MC3
 # Iteration number after burn-in
 50000
 # Iteration number per sample
-1
+10
 # Number of chains per processor
 5
 # Number of non-tempered chains per processor
@@ -15,17 +15,20 @@ KMB06_MC3
 # Random number seed
 12477356
 # Number of traces
-1 
+2
 # Ray parameter
+0.059
 0.059
 # Gaussian parameter
 8.0
+4.0
 # Sample number used in FFT
 1024
 # Observed RF file
-KMB06_120_150_a8.0_MC3.sac
+gr.a_8.0_MC3.stack
+gr.a_4.0_MC3.stack
 # Start/End time
-0.0 5.0
+0.0 10.0
 # Forward computation mode (0: w/o deconv., 1: w/ deconv. )
 0
 # Station depth (km)
@@ -35,15 +38,15 @@ KMB06.vel.formatted
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 31
+1 51
 # Min./Max. of interface depth
 2.499 30.0
 # Min./Max. of dVs
--3.0 3.0
+-1.0 1.0
 # Min./Max. of dVp
--2.0 2.0
+-1.0 1.0
 # Min./Max. of noise sigma
-0.01 0.2
+0.05 0.2
 # standard deviation for depth proposal
 0.03
 # standard deviation for dVs proposal
@@ -63,7 +66,7 @@ KMB06.vel.formatted
 # Number of bins for amplitudes
 100
 # Min./Max. amplitudes to be displayed
--0.6 0.6
+-1.0 1.0
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed

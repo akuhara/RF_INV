@@ -63,8 +63,6 @@ my $yshift_sig = "0c";
 # Synthetic 
 my $width_syn = "10c";
 my $hight_syn = "4c";
-my $ymin_syn  = -0.4;
-my $ymax_syn  = 0.4;
 my $zmin_syn  = 0.0;
 my $zmax_syn  = 0.2;
 my $xtic_syn  = "2f1";
@@ -141,7 +139,7 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gmt makecpt -Cocean -I -Z -T$zmin_syn/$zmax_syn/$dz_syn -Do > /tmp/syn.cpt";
     system "gmt grdimage /tmp/syn.grd -C/tmp/syn.cpt "
 	. "-JX$width_syn/$hight_syn "
-	. "-R$param{t_start}/$param{t_end}/$ymin_syn/$ymax_syn "
+	. "-R$param{t_start}/$param{t_end}/$param{amp_min}/$param{amp_max} "
 	. "-B$xtic_syn:\"$xlabel_syn\":/${ytic_syn}:\"$ylabel_syn\":WSne "
 	. "-X$xshift_syn -Y$yshift_syn "
 	. "-O -K -P >> $out";
