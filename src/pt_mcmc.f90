@@ -235,6 +235,7 @@ contains
     use model
     use likelihood
     use forward
+    use math
     implicit none 
     integer, intent(in) :: iter, ichain
     real(8), intent(in) :: temp
@@ -438,20 +439,7 @@ contains
   
   !---------------------------------------------------------------------
 
-  real(8) function gauss()
-    use mt19937
-    implicit none 
-    real(8), parameter :: pi2 = 2.d0 * 3.1415926535897931d0
-    real(8) :: v1, v2
-    
-    v1 = grnd() 
-    v2 = grnd()
-    gauss = sqrt(-2.d0 * log(v1)) * cos(pi2 * v2)
-    
-    return 
-  end function gauss
   
-  !---------------------------------------------------------------------
 
 
 end module pt_mcmc

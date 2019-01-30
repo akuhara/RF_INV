@@ -32,6 +32,7 @@ program make_syn
   use forward
   use fftw
   use pt_mcmc
+  use math
   implicit none 
   integer :: nlay, i, itrc, it, ierr
   real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
