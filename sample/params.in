@@ -1,11 +1,11 @@
 # Output directory
 KMB06_MC3
 # Iteration number in burn-in period
-10000
+100000
 # Iteration number after burn-in
-50000
+500000
 # Iteration number per sample
-10
+100
 # Number of chains per processor
 5
 # Number of non-tempered chains per processor
@@ -45,7 +45,7 @@ KMB06_MC3
 # Min./Max. of interface depth
 2.499 25.0
 # Standard deviation for dVs prior
-1.0
+0.5
 # Standard deviation for dVp Prior
 1.0 
 # Min./Max. of noise sigma
@@ -73,4 +73,4 @@ KMB06_MC3
 # Min./Max. Vp to be displayed
 0.1 8.6
 # Min./Max. Vs to be displayed
-0.001 5.0
+0.001 6.0

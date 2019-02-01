@@ -133,7 +133,7 @@ contains
        end if
        do i = 1, nbin_z
           write(io_z,*) &
-               & (i - 0.5d0) * dbin_z, dble(nz_sum(i)) / dble(nmod_sum)
+               & (i - 0.5d0) * dbin_z + z_min, dble(nz_sum(i)) / dble(nmod_sum)
        end do
        close(io_z)
 

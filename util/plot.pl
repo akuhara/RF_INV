@@ -39,62 +39,67 @@ my $vp_file    = "$out_dir/vp_z.ppd";
 
 # Layout
 #
+# Number of layer interfaces
+#
 my $width_nk = "7c";
 my $hight_nk = "4c";
-my $ymax_nk  = 0.3;
-my $ymin_nk  = 0.0;
-my $xtic_nk  = "5f1";
-my $ytic_nk  = "0.1";
-my $xlabel_nk = "# of layer interface";
+my ($ymin_nk, $ymax_nk, $ytic_nk)  = get_tics($nk_file, 1, 4);
+$ymin_nk = 0;
+my ($xmin_nk, $xmax_nk, $xtic_nk)  = get_tics($nk_file, 0, 5);
+print "$xmin_nk $xmax_nk $xtic_nk\n";
+my $xlabel_nk = "# of layer interfaces";
 my $ylabel_nk = "Probability";
 my $xshift_nk = "2c";
 my $yshift_nk = "24c";
 #
+# Data noise sigma
+#
 my $width_sig = "7c";
 my $hight_sig = "4c";
-my $ymax_sig  = 0.2;
-my $ymin_sig  = 0.0;
-my $xtic_sig  = "0.01";
-my $ytic_sig  = "0.05";
+my ($ymin_sig, $ymax_sig, $ytic_sig)  = get_tics($sig_file, 1, 4);
+$ymin_sig = 0;
+my ($xmin_sig, $xmax_sig, $xtic_sig)  = get_tics($sig_file, 0, 5);
 my $xlabel_sig = "Noise \@~s\@~";;
 my $ylabel_sig = "Probability";
 my $xshift_sig = "10c";
 my $yshift_sig = "0c";
+#
 # Synthetic 
+#
 my $width_syn = "10c";
 my $hight_syn = "4c";
-my $zmin_syn  = 0.0;
-my $zmax_syn  = 0.2;
-my $xtic_syn  = "2f1";
-my $ytic_syn  = "0.5f0.1";
+my ($xmin_syn, $xmax_syn, $xtic_syn)  = get_tics($syn_file, 0, 10);
+my ($ymin_syn, $ymax_syn, $ytic_syn)  = get_tics($syn_file, 1, 4);
+my ($zmin_syn, $zmax_syn, $ztic_syn)  = get_tics($syn_file, 2, 4);
+$zmin_syn = 0;
 my $xlabel_syn = "Time after P (s)";
 my $ylabel_syn = "RF amp.";
 my $xshift_syn = "-$xshift_sig";
 my $yshift_syn = "-7c";
+#
 # Vs profile
+#
 my $width_vs = "5c";
 my $hight_vs = "-9c";
-my $ymin_vs  = -1.2;
-my $ymax_vs  = 1.2;
-my $zmin_vs  = 0.0;
-my $zmax_vs  = 0.1;
-my $xtic_vs  = "1f0.2";
-my $ytic_vs  = "10f5";
+my ($xmin_vs, $xmax_vs, $xtic_vs)  = get_tics($vs_file, 0, 4);
+my ($ymin_vs, $ymax_vs, $ytic_vs)  = get_tics($vs_file, 1, 10);
+my ($zmin_vs, $zmax_vs, $ztic_vs)  = get_tics($vs_file, 2, 4, "T");
+$zmin_vs  = 0.0;
 my $xlabel_vs = "Vs (km/s)";
 my $ylabel_vs = "Depth (km)";
 my $xshift_vs = "0c";
 my $yshift_vs = "-12c";  
-# Vp
+#
+# Vp profile
+#
 my $width_vp = "5c";
 my $hight_vp = "-9c";
-my $ymin_vp  = -1.2;
-my $ymax_vp  = 1.2;
-my $zmin_vp  = 0.0;
-my $zmax_vp  = 0.1;
-my $xtic_vp  = "2f1";
-my $ytic_vp  = "10f5";
-my $ztic_vp  = 0.1;
-my $xlabel_vp = "Vp (km/s)";
+my ($xmin_vp, $xmax_vp, $xtic_vp)  = get_tics($vp_file, 0, 4);
+my ($ymin_vp, $ymax_vp, $ytic_vp)  = get_tics($vp_file, 1, 10);
+my ($zmin_vp, $zmax_vp, $ztic_vp)  = get_tics($vp_file, 2, 4, "T");
+$zmin_vp  = 0.0;
+
+my $xlabel_vp = "V- (km/s)";
 my $ylabel_vp = "Depth (km)";
 my $xshift_vp = "7c";
 my $yshift_vp = "0c";  
@@ -120,7 +125,8 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gawk '\$3=='$itrc'{print \$1, \$2}' $sig_file "
 	. "| gmt psxy -Sb${dbin_sig}u -W1.0 -Ggray "
 	. "-JX$width_sig/$hight_sig "
-	. "-R$param{sig_min}/$param{sig_max}/$ymin_sig/$ymax_sig "
+	# . "-R$param{sig_min}/$param{sig_max}/$ymin_sig/$ymax_sig "
+	. "-R$xmin_sig/$xmax_sig/$ymin_sig/$ymax_sig "
 	. "-B$xtic_sig:\"$xlabel_sig\":/${ytic_sig}:\"$ylabel_sig\":WSne "
 	. "-X$xshift_sig -Y$yshift_sig "
 	. "-O -K -P >> $out";
@@ -136,10 +142,10 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gawk '\$4=='$itrc'{print \$1, \$2, \$3}' $syn_file "
 	. "| gmt xyz2grd -G/tmp/syn.grd -I$delta/$dbin_amp "
 	. "-R$param{t_start}/$param{t_end}/$amp_min/$amp_max";
-    system "gmt makecpt -Cocean -I -Z -T$zmin_syn/$zmax_syn/$dz_syn -Do > /tmp/syn.cpt";
+    system "gmt makecpt -Cocean -I -Z -T$zmin_syn/$zmax_syn/$ztic_syn -Do > /tmp/syn.cpt";
     system "gmt grdimage /tmp/syn.grd -C/tmp/syn.cpt "
 	. "-JX$width_syn/$hight_syn "
-	. "-R$param{t_start}/$param{t_end}/$param{amp_min}/$param{amp_max} "
+	. "-R$param{t_start}/$param{t_end}/$ymin_syn/$ymax_syn "
 	. "-B$xtic_syn:\"$xlabel_syn\":/${ytic_syn}:\"$ylabel_syn\":WSne "
 	. "-X$xshift_syn -Y$yshift_syn "
 	. "-O -K -P >> $out";
@@ -153,6 +159,11 @@ foreach my $itrc (1..$param{ntrc}) {
 	print {$OBS} "$t $obs[$i]\n";
     }
     close $OBS or die;
+
+    system "gmt psscale -DJRM+ef+o0.6c/0c -C/tmp/syn.cpt " .
+	"-B$ztic_syn:\"Probability\": " .
+	"-R -J -O -K >> $out";
+
 
     # Vs profile
     my $dbin_z = sprintf "%.5f", $param{z_max} / $param{nbin_z};
@@ -169,7 +180,7 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gmt grdimage /tmp/vs.grd -C/tmp/vs.cpt "
 	. "-JX$width_vs/$hight_vs "
 	. "-R0/$param{vs_max}/0/$param{z_max} "
-	. "-B$xtic_vs:\"$xlabel_vs\":/$ytic_vs:\"$ylabel_vs\":WSne "
+	. "-B$xtic_vs:\"$xlabel_vs\":/$ytic_vs:\"$ylabel_vs\":WNse "
 	. "-X$xshift_vs -Y$yshift_vs "
 	. "-O -K -P >> $out";
     open my $V_REF, "<", $param{vel_ref_file} or die;
@@ -181,18 +192,7 @@ foreach my $itrc (1..$param{ntrc}) {
 	my ($z_ref, $vp_ref, $vs_ref) = @item;
 	my $vs_c = $vs_ref;
 	my $vp_c = $vp_ref;
-	#if ($vs_ref + $param{dvs_min} < $param{vs_min}) {
-	#    $vs_c = $param{vs_min} - $param{dvs_min} 
-	#}
-	#elsif ($vs_ref + $param{dvs_max} > $param{vs_max}) {
-	#    $vs_c = $param{vs_max} - $param{dvs_max};
-	#}
-	#if ($vp_ref + $param{dvp_min} < $param{vp_min}) {
-	#    $vp_c = $param{vp_min} - $param{dvp_min} 
-	#}
-	#elsif ($vp_ref + $param{dvp_max} > $param{vp_max}) {
-	#    $vp_c = $param{vp_max} - $param{dvp_max};
-	#}
+
 	push @z_ref, $z_ref;
 	push @vp_ref, $vp_ref;
 	push @vs_ref, $vs_ref;
@@ -233,57 +233,71 @@ foreach my $itrc (1..$param{ntrc}) {
 	close $TEST_VS or die;
     }
 
+    if ($param{vp_mode} == 0) {
+	system "gmt psscale -DJCB+ef+o0c/0.6c -C/tmp/vs.cpt " .
+	    "-B$ztic_vs:\"Probability\": " .
+	    "-R -J -O >> $out";
+    }
+    else {
+	system "gmt psscale -DJCB+ef+o0c/0.6c -C/tmp/vs.cpt " .
+	    "-B$ztic_vs:\"Probability\": " .
+	    "-R -J -O -K >> $out";
+    }
+
+
 
     # Vp profile
-    my $dbin_vp = sprintf "%.5f", ($param{vp_max} - $param{vp_min}) / $param{nbin_vp};
-    my $dz_vp = ($zmax_vp - $zmin_vp) / 10.0;
-    my $vp_min = $param{vp_min} + 0.5 * $dbin_vp;
-    my $vp_max = $param{vp_max} - 0.5 * $dbin_vp;
-    system "gawk '{print \$1, \$2, \$3}' $vp_file "
-	. "| gmt xyz2grd -G/tmp/vp.grd -I$dbin_vp/$dbin_z "
-	. "-R$vp_min/$vp_max/$z_min/$z_max";
-    system "gmt makecpt -Cocean -I -Z -T$zmin_vp/$zmax_vp/$dz_vp -Do > /tmp/vp.cpt";
-    system "gmt grdimage /tmp/vp.grd -C/tmp/vp.cpt "
-	. "-JX$width_vp/$hight_vp "
-	. "-R0/$param{vp_max}/0/$param{z_max} "
-	. "-B$xtic_vp:\"$xlabel_vp\":/$ytic_vp:\"$ylabel_vp\":WSne "
-	. "-X$xshift_vp -Y$yshift_vp "
-	. "-O -P -K >> $out";
-    open my $VP_REF, "| gmt psxy -W1.0,red -J -R -O -K >> $out" or die;
-    foreach my $i (0..$#z_ref) {
-	print {$VP_REF} "$vp_ref[$i] $z_ref[$i]\n";
-    }
-    close $VP_REF or die;
-    open my $VP_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
-    foreach my $i (0..$#z_ref) {
-	print {$VP_REF_LOW} $vp_c[$i] - $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
-    }
-    close $VP_REF_LOW or die;
-    open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
-    foreach my $i (0..$#z_ref) {
-	print {$VP_REF_UP} $vp_c[$i] + $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
-    }
-    close $VP_REF_UP or die;
-    if ($test_mode) {
-	open my $TEST_VEL, "<", "test_vel" or die;
-	open my $TEST_VP, "| gmt psxy -J -R -O -K -W1.0,pink ". 
-	    " >> $out" or die;
-	my $tmp_dep = 0.0;
-	while (my $line = <$TEST_VEL>) {
-	    chomp $line;
-	    my @item = split q{ }, $line;
-	    my ($vp, $h) = @item[0,3];
-	    print {$TEST_VP} "$vp $tmp_dep\n";
-	    $tmp_dep += $h;
-	    print {$TEST_VP} "$vp $tmp_dep\n";
+    if ($param{vp_mode} == 1) {
+	my $dbin_vp = sprintf "%.5f", ($param{vp_max} - $param{vp_min}) / $param{nbin_vp};
+	my $dz_vp = ($zmax_vp - $zmin_vp) / 10.0;
+	my $vp_min = $param{vp_min} + 0.5 * $dbin_vp;
+	my $vp_max = $param{vp_max} - 0.5 * $dbin_vp;
+	system "gawk '{print \$1, \$2, \$3}' $vp_file "
+	    . "| gmt xyz2grd -G/tmp/vp.grd -I$dbin_vp/$dbin_z "
+	    . "-R$vp_min/$vp_max/$z_min/$z_max";
+	system "gmt makecpt -Cocean -I -Z -T$zmin_vp/$zmax_vp/$dz_vp -Do > /tmp/vp.cpt";
+	system "gmt grdimage /tmp/vp.grd -C/tmp/vp.cpt "
+	    . "-JX$width_vp/$hight_vp "
+	    . "-R0/$param{vp_max}/0/$param{z_max} "
+	    . "-B$xtic_vp:\"$xlabel_vp\":/$ytic_vp:\"$ylabel_vp\":WNse "
+	    . "-X$xshift_vp -Y$yshift_vp "
+	    . "-O -P -K >> $out";
+	open my $VP_REF, "| gmt psxy -W1.0,red -J -R -O -K >> $out" or die;
+	foreach my $i (0..$#z_ref) {
+	    print {$VP_REF} "$vp_ref[$i] $z_ref[$i]\n";
 	}
-	close $TEST_VEL or die;
-	close $TEST_VP or die;
+	close $VP_REF or die;
+	open my $VP_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
+	foreach my $i (0..$#z_ref) {
+	    print {$VP_REF_LOW} $vp_c[$i] - $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
+	}
+	close $VP_REF_LOW or die;
+	open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
+	foreach my $i (0..$#z_ref) {
+	    print {$VP_REF_UP} $vp_c[$i] + $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
+	}
+	close $VP_REF_UP or die;
+	if ($test_mode) {
+	    open my $TEST_VEL, "<", "test_vel" or die;
+	    open my $TEST_VP, "| gmt psxy -J -R -O -K -W1.0,pink ". 
+		" >> $out" or die;
+	    my $tmp_dep = 0.0;
+	    while (my $line = <$TEST_VEL>) {
+		chomp $line;
+		my @item = split q{ }, $line;
+		my ($vp, $h) = @item[0,3];
+		print {$TEST_VP} "$vp $tmp_dep\n";
+		$tmp_dep += $h;
+		print {$TEST_VP} "$vp $tmp_dep\n";
+	    }
+	    close $TEST_VEL or die;
+	    close $TEST_VP or die;
+	}
+	
+	system "gmt psscale -DJCB+ef+o0c/0.6c -C/tmp/vp.cpt " .
+	    "-B$ztic_vp:\"Probability\": " .
+	    "-R -J -O >> $out";
     }
-    
-    system "gmt psscale -DJCB+ef+o0c/2.0c -C/tmp/vp.cpt " .
-	"-B$ztic_vp:\"Probability\": " .
-	"-R -J -O >> $out";
 }
 
 
@@ -419,6 +433,68 @@ sub get_param {
     close $PARAM or die;
     return \%param;
     
+}
+
+
+sub get_tics {
+    my $in = $_[0];
+    my $icol = $_[1];
+    my $n   = $_[2];
+    my $flag;
+    if (@_ == 4) {
+	$flag = $_[3];
+    }
+    my ($min, $max) = get_min_max($in, $icol, $flag);
+    my $inc = 0;
+    my $tmp_min = $min;
+    my $tmp_max = $max;
+    my $fac = 1;
+    while ($inc <= 0) {
+	$inc = int(($tmp_max - $tmp_min) / $n) * $fac;
+	$tmp_min *= 10;
+	$tmp_max *= 10;
+	$fac *= 0.1;
+    }
+    
+    my $out_max = int(($max + $inc) / $inc) * $inc;
+    my $out_min = int(($min - $inc) / $inc) * $inc;
+
+    return ($out_min, $out_max, $inc);
+}
+
+
+sub get_min_max {
+    my $in = $_[0];
+    my $icol = $_[1];
+    my $flag;
+    if (defined $_[2]) {
+	$flag = 1;
+	print "aaaaaaaa $icol $in\n";
+    }
+    open my $IN, "<", $in or die "ERROR: Cannot open $in\n";
+    my ($min, $max);
+    while (my $line = <$IN>) {
+	chomp $line;
+	my @item = split q{ }, $line;
+	if (defined $flag and $icol == 2 and $item[$icol] == 1.0) {
+	    print "DDDDD\n";
+	    next;
+	}
+	if (!defined $max) {
+	    $max = $item[$icol];
+	    $min = $item[$icol];
+	}
+	if ($max < $item[$icol]) {
+	    $max = $item[$icol];
+	}
+
+	if ($min > $item[$icol]) {
+	    $min = $item[$icol];
+	}
+    }
+    close $IN or die;
+    
+    return $min, $max;
 }
 
 
