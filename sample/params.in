@@ -24,6 +24,10 @@ KMB06_MC3
 8.0
 4.0
 1.0
+# Incident phase type (P: 1, S: -1)
+1
+1
+1
 # Sample number used in FFT
 1024
 # Observed RF file
@@ -41,11 +45,11 @@ KMB06_MC3
 # Vp mode (0: Fixed, 1: solved)
 0
 # Min./Max. # of interfaces
-1 31
+1 41
 # Min./Max. of interface depth
-2.499 25.0
+2.499 20.0
 # Standard deviation for dVs prior
-0.5
+0.2
 # Standard deviation for dVp Prior
 1.0 
 # Min./Max. of noise sigma

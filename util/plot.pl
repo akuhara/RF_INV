@@ -35,8 +35,6 @@ my $vs_file    = "$out_dir/vs_z.ppd";
 my $vp_file    = "$out_dir/vp_z.ppd";
 
 
-
-
 # Layout
 #
 # Number of layer interfaces
@@ -125,7 +123,6 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gawk '\$3=='$itrc'{print \$1, \$2}' $sig_file "
 	. "| gmt psxy -Sb${dbin_sig}u -W1.0 -Ggray "
 	. "-JX$width_sig/$hight_sig "
-	# . "-R$param{sig_min}/$param{sig_max}/$ymin_sig/$ymax_sig "
 	. "-R$xmin_sig/$xmax_sig/$ymin_sig/$ymax_sig "
 	. "-B$xtic_sig:\"$xlabel_sig\":/${ytic_sig}:\"$ylabel_sig\":WSne "
 	. "-X$xshift_sig -Y$yshift_sig "
@@ -207,12 +204,22 @@ foreach my $itrc (1..$param{ntrc}) {
     close $VS_REF or die;
     open my $VS_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VS_REF_LOW} $vs_c[$i] - $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
+	if ($z_ref[$i] >= $param{z_min}) {
+	    print {$VS_REF_LOW} $vs_c[$i] - $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
+	}
+	else {
+	    print {$VS_REF_LOW} $vs_c[$i], q{ }, $z_ref[$i],"\n";	    
+	}
     }
     close $VS_REF_LOW or die;
     open my $VS_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
     foreach my $i (0..$#z_ref) {
-	print {$VS_REF_UP} $vs_c[$i] + $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
+	if ($z_ref[$i] >= $param{z_min}) {
+	    print {$VS_REF_UP} $vs_c[$i] + $param{dvs_prior}, q{ }, $z_ref[$i],"\n";
+	}
+	else {
+	    print {$VS_REF_UP} $vs_c[$i], q{ }, $z_ref[$i],"\n";
+	}
     }
     close $VS_REF_UP or die;
     
@@ -269,12 +276,24 @@ foreach my $itrc (1..$param{ntrc}) {
 	close $VP_REF or die;
 	open my $VP_REF_LOW, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
 	foreach my $i (0..$#z_ref) {
-	    print {$VP_REF_LOW} $vp_c[$i] - $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
+	    if ($z_ref[$i] >= $param{z_min}) {
+		print {$VP_REF_LOW} $vp_c[$i] - $param{dvp_prior}, 
+		q{ }, $z_ref[$i],"\n";
+	    }
+	    else {
+		print {$VP_REF_LOW} $vp_c[$i], q{ }, $z_ref[$i],"\n";
+	    }
 	}
 	close $VP_REF_LOW or die;
 	open my $VP_REF_UP, "| gmt psxy -W1.0,red,- -J -R -O -K >> $out" or die;
 	foreach my $i (0..$#z_ref) {
-	    print {$VP_REF_UP} $vp_c[$i] + $param{dvp_prior}, q{ }, $z_ref[$i],"\n";
+	    if ($z_ref[$i] >= $param{z_min}) {
+		print {$VP_REF_UP} $vp_c[$i] + $param{dvp_prior}, 
+		q{ }, $z_ref[$i],"\n";
+	    }
+	    else {
+		print {$VP_REF_UP} $vp_c[$i], q{ }, $z_ref[$i],"\n";
+	    }
 	}
 	close $VP_REF_UP or die;
 	if ($test_mode) {
@@ -350,82 +369,84 @@ sub get_param {
 	    next if (@{$param{gauss}} < $param{ntrc});
 	}
 	elsif ($i == 10) {
-	    $param{nfft} = $item[0];
+	    push @{$param{ipha}}, $item[0];
+	    next if (@{$param{ipha}} < $param{$ntrc});
 	}
 	elsif ($i == 11) {
+	    $param{nfft} = $item[0];
+	}
+	elsif ($i == 12) {
 	    (my $tmp = $item[0]) =~ s/'//g;
 	    push @{$param{obs_files}}, $tmp;
 	    next if (@{$param{obs_files}} < $param{ntrc});
 	}
-	elsif ($i == 12) {
+	elsif ($i == 13) {
 	    ($param{t_start}, $param{t_end}) = @item[0,1];
 	   
 	}
-	elsif ($i == 13) {
+	elsif ($i == 14) {
 	    $param{deconv_mode} = $item[0];
 	}
-	elsif ($i == 14) {
-	    $param{sdep} = $item[0];
-	    print "$line AAAAAAAAAAAAAA\n";
-	}
 	elsif ($i == 15) {
-	    (my $tmp = $item[0]) =~ s/'//g;
-	    $param{vel_ref_file} = $tmp;
-	    print "$line DDDDDDDDDDDDDDDD\n";
+	    $param{sdep} = $item[0];
 	}
 	elsif ($i == 16) {
-	    $param{vp_mode} = $item[0];
+	    (my $tmp = $item[0]) =~ s/'//g;
+	    $param{vel_ref_file} = $tmp;
 	}
 	elsif ($i == 17) {
-	    ($param{k_min}, $param{k_max}) = @item[0,1];
+	    $param{vp_mode} = $item[0];
 	}
 	elsif ($i == 18) {
+	    ($param{k_min}, $param{k_max}) = @item[0,1];
+	}
+	elsif ($i == 19) {
 	    ($param{z_min}, $param{z_max}) = @item[0,1];
 	   
 	}
-	elsif ($i == 19) {
+	elsif ($i == 20) {
 	    $param{dvs_prior} =  $item[0];
 	}
-	elsif ($i == 20) {
+	elsif ($i == 21) {
 	    $param{dvp_prior} =  $item[0];
 	}
-	elsif ($i == 21) {
+	elsif ($i == 22) {
 	    ($param{sig_min}, $param{sig_max}) = @item[0,1];
 	}
-	elsif ($i == 22) {
+	elsif ($i == 23) {
 	    $param{dev_z} = $item[0];
 	}
-	elsif ($i == 23) {
+	elsif ($i == 24) {
 	    $param{dev_dvs} = $item[0];
 	}
-	elsif ($i == 24) {
+	elsif ($i == 25) {
 	    $param{dev_dvp} = $item[0];
 	}
-	elsif ($i == 25) {
+	elsif ($i == 26) {
 	    $param{dev_sig} = $item[0];
 	}
-	elsif ($i == 26) {
+	elsif ($i == 27) {
 	    $param{nbin_z} = $item[0];
 	}
-	elsif ($i == 27) {
+	elsif ($i == 28) {
 	    $param{nbin_vs} = $item[0];
 	}
-	elsif ($i == 28) {
+	elsif ($i == 29) {
 	    $param{nbin_vp} = $item[0];
 	}
-	elsif ($i == 29) {
+	elsif ($i == 30) {
 	    $param{nbin_sig} = $item[0];
 	}
-	elsif ($i == 30) {
+	elsif ($i == 31) {
 	    $param{nbin_amp} = $item[0];
 	}
-	elsif ($i == 31) {
+	elsif ($i == 32) {
 	    ($param{amp_min}, $param{amp_max}) = @item[0,1];
 	}
-	elsif ($i == 32) {
+	elsif ($i == 33) {
 	    ($param{vp_min}, $param{vp_max}) = @item[0,1];
 	}
-	elsif ($i == 33) {
+	elsif ($i == 34) {
 	    ($param{vs_min}, $param{vs_max}) = @item[0,1];
 	}
 	$i ++;
@@ -469,7 +490,6 @@ sub get_min_max {
     my $flag;
     if (defined $_[2]) {
 	$flag = 1;
-	print "aaaaaaaa $icol $in\n";
     }
     open my $IN, "<", $in or die "ERROR: Cannot open $in\n";
     my ($min, $max);
@@ -477,7 +497,6 @@ sub get_min_max {
 	chomp $line;
 	my @item = split q{ }, $line;
 	if (defined $flag and $icol == 2 and $item[$icol] == 1.0) {
-	    print "DDDDD\n";
 	    next;
 	}
 	if (!defined $max) {

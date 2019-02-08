@@ -51,7 +51,8 @@ module params
   integer :: iseed
   
   ! observation
-  integer :: ntrc, nsmp
+  integer :: ntrc, nsmp, 
+  integer, allocatable :: ipha(:)
   character(clen_max), allocatable :: obs_files(:)
   real(8), allocatable :: rayps(:)
   real(8), allocatable :: obs(:,:)
@@ -158,6 +159,12 @@ contains
        write(io_copy, *) a_gus(itrc)
     end do
     
+    do itrc = 1, ntrc
+       call get_line(io_param, line)
+       read(line,*) ipha(itrc)
+       write(io_copy, *) ipha(itrc)
+    end do
+
     call get_line(io_param, line)
     read(line,*) nfft
     write(io_copy, *) nfft
@@ -287,13 +294,17 @@ contains
                & a_gus(itrc)
        end do
        do itrc = 1, ntrc
+          write(*,*)"Incident phase type                    : ", &
+               & ipha(itrc)
+       end do
+       write(*,*)"Sample number used in FFT              : ", nfft
+       do itrc = 1, ntrc
           write(*,*)"Observed RF file                       : ", &
                & trim(obs_files(itrc))
        end do
        write(*,*)"Start/End time                         : ", t_start, &
             & t_end
        write(*,*)"Forward computation mode               : ", deconv_mode
-       write(*,*)"Sample number used in FFT              : ", nfft
        write(*,*)"Station depth                          : ", sdep
        write(*,*)"Reference velocity file                : ", trim(vel_file)
        write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
@@ -340,10 +351,10 @@ contains
   !=====================================================================
   
   subroutine allocate_trace_num()
-    
-    allocate(rayps(ntrc), a_gus(ntrc))
-    allocate(obs_files(ntrc), obs(npts_max, ntrc))
+    implicit none 
 
+    allocate(rayps(ntrc), a_gus(ntrc), ipha(ntrc))
+    allocate(obs_files(ntrc), obs(npts_max, ntrc))
     
     return 
   end subroutine allocate_trace_num
