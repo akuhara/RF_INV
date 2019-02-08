@@ -36,8 +36,9 @@ program main
    use mcmc_out
    implicit none 
    include "mpif.h"
-   integer :: nproc, rank, ierr
+   integer :: nproc, rank, ierr, iarg
    logical :: verb
+   character(clen_max) :: param_file
 
    ! Initialize MPI 
    call mpi_init(ierr)
@@ -58,8 +59,14 @@ program main
    ! Initialize
    !============================================================  
    ! Read parameters from file
-   call get_params(verb, "params.in") ! if rank == 0 -> verbose
 
+   param_file = "params.in"
+   iarg = command_argument_count()
+   if (iarg > 1) then
+      call get_command_argument(1, param_file)   
+   end if
+   call get_params(verb, param_file) 
+   
    ! Read observed files
    call read_obs(verb)
 

@@ -34,14 +34,21 @@ program make_syn
   use pt_mcmc
   use math
   implicit none 
-  integer :: nlay, i, itrc, it, ierr
+  integer :: nlay, i, itrc, it, ierr, iarg
   real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
   logical, parameter :: verb = .true.
   real(8), allocatable :: noise(:,:), noise_sigma(:)
-  character(clen_max) :: out_sac
+  character(clen_max) :: out_sac, param_file
   logical :: is_valid
 
-  call get_params(verb, "params.in")
+  
+  param_file = "params.in"
+  iarg = command_argument_count()
+  if (iarg > 1) then
+     call get_command_argument(1, param_file)   
+   end if
+
+  call get_params(verb, param_file)
   
   call sgrnd(iseed)
 
