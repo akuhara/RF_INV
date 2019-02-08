@@ -44,7 +44,7 @@ program make_syn
   
   param_file = "params.in"
   iarg = command_argument_count()
-  if (iarg > 1) then
+  if (iarg > 0) then
      call get_command_argument(1, param_file)   
    end if
 
