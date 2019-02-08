@@ -149,8 +149,11 @@ contains
           freq_r = conjg(freq_r)
           freq_v = -conjg(freq_v) ! Set upward positive
           
-          if (deconv_mode == 1) then
+          if (deconv_mode == 1 .and. ipha(itrc) == 1) then
              call water_level_decon(freq_r, freq_v, rff, nh, 0.001d0)
+             tp = 0.d0
+          else if (deconv_mode == 1 .and. ipha(itrc) == -1) then
+             call water_level_decon(freq_v, freq_r, rff, nh, 0.001d0)
              tp = 0.d0
           else
              rff(1:nh) = freq_r(1:nh)
