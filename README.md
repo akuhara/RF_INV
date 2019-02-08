@@ -13,7 +13,9 @@ There are many softwares and literatures for trans-dimensional inversion of rece
 * Applicable to OBS data
     * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
 * Multiple input traces
-    * Can asign different ray parameter and Gaussian-filter for each trace.    
+    * Can asign different ray parameter and Gaussian-filter for each trace.
+* Can use S-RF
+    * Joint inversion of P and S receiver functions is also possible.
 * Parallel tempering
     * More efficient than conventional MCMC.
     
