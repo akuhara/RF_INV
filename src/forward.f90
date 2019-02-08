@@ -34,12 +34,12 @@ module forward
   real(8), parameter, private :: pi = 3.1415926535897931d0
   complex(kind(0d0)), parameter, private :: ei = (0.d0, 1.d0)
 
-  logical :: is_rayp_common
+  logical :: is_ray_common
 
   public init_forward, calc_rf
   private init_filter, calc_seis, &
        & e_inverse, layer_matrix_sol, layer_matrix_liq, &
-       & water_level_decon, check_rayp
+       & water_level_decon, check_ray
   
 contains
 
@@ -50,46 +50,46 @@ contains
     logical, intent(in) :: verb
     
     call init_filter()
-    call check_rayp(verb)
+    call check_ray(verb)
     
     return 
   end subroutine init_forward
     
   !=====================================================================
 
-  subroutine check_rayp(verb)
-    use params, only: ntrc, rayps
+  subroutine check_ray(verb)
+    use params, only: ntrc, rayps, ipha
     implicit none 
     logical, intent(in) :: verb
     integer :: itrc
     
-    is_rayp_common = .true.
+    is_ray_common = .true.
 
     if (ntrc > 1) then
        if (verb) then
           write(*,*) "--- check ray parameters ---"
        end if
        do itrc = 2, ntrc
-          if (rayps(itrc) /= rayps(1)) then
-             is_rayp_common = .false.
+          if (rayps(itrc) /= rayps(1) .or. ipha(itrc) /= ipha(1)) then
+             is_ray_common = .false.
           end if
        end do
     end if
 
     if (verb .and. ntrc > 1) then
-       if (is_rayp_common) then
-          write(*,*) "Ray parameters are common among traces"
+       if (is_ray_common) then
+          write(*,*) "Ray geometries are common among traces"
           write(*,*) "-> Single FWD mode"
           write(*,*)
        else 
-          write(*,*) "Ray parameters are not common among traces"
+          write(*,*) "Ray geometries are not common among traces"
           write(*,*) "-> Multiple FWD mode"
           write(*,*)
        end if
     end if
 
     return 
-  end subroutine check_rayp
+  end subroutine check_ray
 
   !=====================================================================
     
@@ -124,7 +124,7 @@ contains
   subroutine calc_rf(chain_id, nlay, n, ntrc, rayps, &
        & alpha, beta, rho, h, rft)
     use fftw
-    use params, only : delta, a_gus, deconv_mode, t_start
+    use params, only : delta, a_gus, deconv_mode, t_start, ipha
     implicit none 
     integer, intent(in) :: nlay, n, ntrc, chain_id
     real(8), intent(in) :: rayps(ntrc)
@@ -142,9 +142,9 @@ contains
        
        
 
-       if (itrc == 1 .or. .not. is_rayp_common) then
-          call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), 1, &
-               & alpha, beta, rho, h, freq_r, freq_v)
+       if (itrc == 1 .or. .not. is_ray_common) then
+          call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), &
+               & ipha(itrc), alpha, beta, rho, h, freq_r, freq_v)
           
           freq_r = conjg(freq_r)
           freq_v = -conjg(freq_v) ! Set upward positive
@@ -168,14 +168,24 @@ contains
        npre = nint((-t_start - tp) / delta)
        
        ! Time shift
-       do i = 1, nfft
-          j = mod(nfft - npre + i, nfft)
-          if (j == 0) then
-             j = nfft
-          end if
-          rft(i, itrc) = rx(j)
-       end do
-       
+       if (ipha(itrc) == 1)  then
+          do i = 1, nfft
+             j = mod(nfft - npre + i, nfft)
+             if (j == 0) then
+                j = nfft
+             end if
+             rft(i, itrc) = rx(j)
+          end do
+       else
+          do i = 1, nfft
+             j = mod(nfft + npre - i + 1, nfft)
+             if (j == 0) then
+                j = nfft
+             end if
+             rft(i, itrc) = -rx(j)
+          end do
+       end if
+          
        ! Normalizatoin by vertical (only case w/o deconvolution)
        if (deconv_mode == 0) then
           cx(1:nh) = freq_v(1:nh) * flt(1:nh, itrc)

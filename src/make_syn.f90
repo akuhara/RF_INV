@@ -75,7 +75,7 @@ program make_syn
   allocate(noise(nfft, ntrc), noise_sigma(ntrc))
 
   
-  if (is_rayp_common) then
+  if (is_ray_common) then
      noise_sigma(1) = grnd() * (sig_max - sig_min) + sig_min
      do it = 1, nfft
         noise(it, 1) = gauss() * noise_sigma(1)

@@ -51,7 +51,7 @@ module params
   integer :: iseed
   
   ! observation
-  integer :: ntrc, nsmp, 
+  integer :: ntrc, nsmp
   integer, allocatable :: ipha(:)
   character(clen_max), allocatable :: obs_files(:)
   real(8), allocatable :: rayps(:)
