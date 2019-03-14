@@ -19,6 +19,8 @@ There are many softwares and literatures for trans-dimensional inversion of rece
     * Joint inversion of P and S receiver functions is also possible.
 * Parallel tempering
     * More efficient than conventional MCMC.
+* Invert for velocity perturbation
+    * Non-uniqueness of inversion can be mitigated by constraint from a reference velocity model.
     
 See [Wiki](https://github.com/akuhara/RF_INV/wiki) for more details.
 
