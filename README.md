@@ -4,7 +4,7 @@ Receiver function inversion by reversible-jump Markov-chain Monte Carlo
 
 (c) 2018 Takeshi Akuhara (Email: akuhara @ eri.u-tokyo.ac.jp)
 
-Any bug report is welcome!
+Any bug report and suggestions are welcome!
 
 # Features
 
