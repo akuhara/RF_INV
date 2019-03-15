@@ -32,6 +32,7 @@ module pt_mcmc
   integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
   integer, allocatable :: nprop(:), naccept(:)
   integer, allocatable :: nvpz(:,:), nvsz(:,:)
+  real(8), allocatable :: likelihood_hist(:)
   real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
   public init_pt_mcmc
@@ -180,14 +181,19 @@ contains
     if (temp <= 1.d0 + 1.0e-6) then
        nprop(itype) = nprop(itype) + 1
        if (yn) naccept(itype) = naccept(itype) + 1
+
+       likelihood_hist(iter) = &
+            likelihood_hist(iter) + log_likelihood(ichain)
+       
     end if
 
     ! record sampled model
     if (temp <= 1.d0 + 1.0e-6 .and. iter > nburn .and. &
-         & mod(iter - nburn, ncorr) == 0) then
+         & mod(iter, ncorr) == 0) then
        
        nmod = nmod + 1
 
+       
        ! # of layer interfaces
        nk(k(ichain)) = nk(k(ichain)) + 1
        
@@ -269,6 +275,7 @@ contains
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
     allocate(nprop(ntype), naccept(ntype))
+    allocate(likelihood_hist(niter + nburn))
     
     nk = 0
     nz = 0
@@ -279,6 +286,7 @@ contains
     nmod = 0
     naccept = 0
     nprop = 0
+    likelihood_hist = 0.d0
 
     dbin_sig = (sig_max - sig_min) / nbin_sig
     dbin_amp = (amp_max - amp_min) / nbin_amp
@@ -352,7 +360,7 @@ contains
        
        if (nchains < 2) cycle ! single-chain MCMC
 
-       ! determine chain pair
+       ! determine chain pair (extra job for rank=0 chain)
        if (rank == 0) then
           itarget1 = int(grnd() * n_all)
           do 
@@ -372,7 +380,6 @@ contains
        end if
        call mpi_bcast(ipack, 4, MPI_INTEGER4, 0, &
             & MPI_COMM_WORLD, ierr)
-       
        rank1   = ipack(1)
        rank2   = ipack(2)
        ichain1 = ipack(3)
@@ -389,6 +396,12 @@ contains
              temps(ichain2) = temp1
              temps(ichain1) = temp2
           end if
+          !if (yn .and. temp1 < 1.d0 + 1.0e-6) then
+          !   write(*,*)"Successful jump of non-tempered chain to ", temp2
+          !else if (yn .and. temp2 < 1.d0 + 1.0e-6) then
+          !   write(*,*)"Successful jump of non-tempered chain to ", temp1
+          !end if
+          
        else if (rank1 == rank) then
           ! Receive the other chain's status and judge
           call mpi_recv(rpack, 2, MPI_REAL8, rank2, 2018, &
@@ -404,6 +417,11 @@ contains
           end if
           call mpi_send(rpack, 1, MPI_REAL8, rank2, 1988, &
                & MPI_COMM_WORLD, status, ierr)
+          !if (yn .and. temp1 < 1.d0 + 1.0e-6) then
+          !   write(*,*)"Successful jump of non-tempered chain to ", temp2
+          !else if (yn .and. temp2 < 1.d0 + 1.0e-6) then
+          !   write(*,*)"Successful jump of non-tempered chain to ", temp1
+          !end if
        else if (rank2 == rank) then
           ! Send status to the other chain and receive result
           rpack(1) = temps(ichain2)

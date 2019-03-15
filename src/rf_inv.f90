@@ -98,7 +98,7 @@ program main
    
 
    !output
-   call output_results(rank, verb)
+   call output_results(nproc, rank, verb)
    
    ! Finish
    call mpi_finalize(ierr)

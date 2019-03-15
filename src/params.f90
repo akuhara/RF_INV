@@ -33,7 +33,8 @@ module params
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
   integer, parameter :: io_nk = 40, io_syn = 50, io_vpz = 60
   integer, parameter :: io_vsz = 70, io_z = 80, io_sig = 90
-  integer, parameter :: io_copy = 100
+  integer, parameter :: io_copy = 100, io_lkhd = 110
+
   integer, parameter :: npts_max = 2000, nlay_max = 200
 
   ! Output directory

@@ -32,16 +32,17 @@ module mcmc_out
   
 contains
   
-  subroutine output_results(rank, verb)
+  subroutine output_results(nproc, rank, verb)
     implicit none 
     include "mpif.h"
-    integer, intent(in) :: rank
+    integer, intent(in) :: nproc, rank
     logical, intent(in) :: verb
     integer :: nk_sum(k_max), ierr, ik, itrc, it, i, iv, iz
     integer :: namp_sum(nbin_amp, nsmp, ntrc), nmod_sum
     integer :: nprop_sum(ntype), naccept_sum(ntype)
     integer :: nvsz_sum(nbin_z, nbin_vs), nvpz_sum(nbin_z, nbin_vp)
     integer :: nsig_sum(nbin_sig, ntrc), nz_sum(nbin_z)
+    real(8) :: likelihood_hist_av(nburn + niter)
     character(clen_max) :: out_file
     
     call mpi_reduce(nmod, nmod_sum, 1, MPI_INTEGER4, MPI_SUM, &
@@ -62,6 +63,9 @@ contains
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call mpi_reduce(nsig, nsig_sum, nbin_sig * ntrc, &
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    call mpi_reduce(likelihood_hist, likelihood_hist_av, &
+         & nburn + niter, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    
     
 
     if (rank == 0) then
@@ -86,6 +90,20 @@ contains
              write(*,*)
        end if
        
+       ! Transition of Likelihood 
+       out_file = trim(out_dir) // "/" // 'likelihood'
+       open(io_lkhd, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do it = 1, nburn + niter
+          write(io_lkhd,*)it, likelihood_hist(it) / dble(ncool * nproc)
+       end do
+       close(io_lkhd)
+
        ! # of layer interfaces
        out_file = trim(out_dir) // "/" // 'num_interface.ppd'
        open(io_nk, file = out_file, status = "unknown", &
