@@ -4,7 +4,7 @@ Receiver function inversion by reversible-jump Markov-chain Monte Carlo
 
 (c) 2018 Takeshi Akuhara (Email: akuhara @ eri.u-tokyo.ac.jp)
 
-IMPORTANT NOTE (1/18/2019) : THIS PROGRAM IS UNDER DEVELOPMENT. ANY BUG REPORT IS WELCOME, BUT I DON'T GURANTEE THAT THE PROGRAM WORKS CORRECTLY AT THIS STAGE. A COMPLETE VERSION WILL BE RELEASED IN THE NEAR FUTURE.
+Any bug report and suggestions are welcome!
 
 # Features
 
@@ -13,9 +13,13 @@ There are many softwares and literatures for trans-dimensional inversion of rece
 * Applicable to OBS data
     * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
 * Multiple input traces
-    * Can asign different ray parameter and Gaussian-filter for each trace.    
+    * Can asign different ray parameter and Gaussian-filter for each trace.
+* Can use S receiver functions
+    * Joint inversion of P and S receiver functions is also possible.
 * Parallel tempering
     * More efficient than conventional MCMC.
+* Invert for velocity perturbation
+    * Non-uniqueness of inversion can be mitigated by constraint from a reference velocity model.
     
 See [Wiki](https://github.com/akuhara/RF_INV/wiki) for more details.
 
