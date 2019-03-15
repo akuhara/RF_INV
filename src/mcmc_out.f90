@@ -148,7 +148,7 @@ contains
        end if
        do itrc = 1, ntrc
           do i = 1, nbin_sig
-             write(io_sig,*) (i - 0.5d0) * dbin_sig, &
+             write(io_sig,*) (i - 0.5d0) * dbin_sig + sig_min, &
                   & dble(nsig_sum(i, itrc)) / dble(nmod_sum), &
                   & itrc
           end do

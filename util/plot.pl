@@ -57,6 +57,7 @@ my $hight_sig = "4c";
 my ($ymin_sig, $ymax_sig, $ytic_sig)  = get_tics($sig_file, 1, 4);
 $ymin_sig = 0;
 my ($xmin_sig, $xmax_sig, $xtic_sig)  = get_tics($sig_file, 0, 5);
+print "$xmin_sig $xmax_sig\n";
 my $xlabel_sig = "Noise \@~s\@~";;
 my $ylabel_sig = "Probability";
 my $xshift_sig = "10c";
@@ -90,23 +91,29 @@ my $yshift_vs = "-12c";
 #
 # Vp profile
 #
-my $width_vp = "5c";
-my $hight_vp = "-9c";
-my ($xmin_vp, $xmax_vp, $xtic_vp)  = get_tics($vp_file, 0, 4);
-my ($ymin_vp, $ymax_vp, $ytic_vp)  = get_tics($vp_file, 1, 10);
-my ($zmin_vp, $zmax_vp, $ztic_vp)  = get_tics($vp_file, 2, 4, "T");
-$zmin_vp  = 0.0;
-
-my $xlabel_vp = "V- (km/s)";
-my $ylabel_vp = "Depth (km)";
-my $xshift_vp = "7c";
-my $yshift_vp = "0c";  
+my ($width_vp, $hight_vp, $xmin_vp, $xmax_vp, $xtic_vp, $ymin_vp, 
+    $ymax_vp, $ytic_vp, $zmin_vp, $zmax_vp, $ztic_vp, $xlabel_vp, 
+    $ylabel_vp, $xshift_vp, $yshift_vp);
+if ($param{vp_mode} == 1) {
+    $width_vp = "5c";
+    $hight_vp = "-9c";
+    ($xmin_vp, $xmax_vp, $xtic_vp)  = get_tics($vp_file, 0, 4);
+    ($ymin_vp, $ymax_vp, $ytic_vp)  = get_tics($vp_file, 1, 10);
+    ($zmin_vp, $zmax_vp, $ztic_vp)  = get_tics($vp_file, 2, 4, "T");
+    $zmin_vp  = 0.0;
+    
+    $xlabel_vp = "Vp (km/s)";
+    $ylabel_vp = "Depth (km)";
+    $xshift_vp = "7c";
+    $yshift_vp = "0c";
+}  
 
 
 #---------------------------------------------------------------------
 
 foreach my $itrc (1..$param{ntrc}) {
-
+    print "Now woking on trace # $itrc\n";
+    
     # output file name
     my $out = sprintf "$out_dir/plot.%02d.ps", $itrc;
 
@@ -139,7 +146,7 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gawk '\$4=='$itrc'{print \$1, \$2, \$3}' $syn_file "
 	. "| gmt xyz2grd -G/tmp/syn.grd -I$delta/$dbin_amp "
 	. "-R$param{t_start}/$param{t_end}/$amp_min/$amp_max";
-    system "gmt makecpt -Cocean -I -Z -T$zmin_syn/$zmax_syn/$ztic_syn -Do > /tmp/syn.cpt";
+    system "gmt makecpt -Chaxby -I -Z -T$zmin_syn/$zmax_syn/$ztic_syn -Do > /tmp/syn.cpt";
     system "gmt grdimage /tmp/syn.grd -C/tmp/syn.cpt "
 	. "-JX$width_syn/$hight_syn "
 	. "-R$param{t_start}/$param{t_end}/$ymin_syn/$ymax_syn "
@@ -173,7 +180,7 @@ foreach my $itrc (1..$param{ntrc}) {
     system "gawk '{print \$1, \$2, \$3}' $vs_file "
 	. "| gmt xyz2grd -G/tmp/vs.grd -I$dbin_vs/$dbin_z "
 	. "-R$vs_min/$vs_max/$z_min/$z_max";
-    system "gmt makecpt -Cocean -I -Z -T$zmin_vs/$zmax_vs/$dz_vs -Do > /tmp/vs.cpt";
+    system "gmt makecpt -Chaxby -I -Z -T0/0.2/$dz_vs -Do > /tmp/vs.cpt";
     system "gmt grdimage /tmp/vs.grd -C/tmp/vs.cpt "
 	. "-JX$width_vs/$hight_vs "
 	. "-R0/$param{vs_max}/0/$param{z_max} "
@@ -239,6 +246,25 @@ foreach my $itrc (1..$param{ntrc}) {
 	close $TEST_VEL or die;
 	close $TEST_VS or die;
     }
+    else {
+	my ($low_lim_ref, $up_lim_ref, $mean_ref) 
+	    = conf_int_2d($vs_file, 0.1, -1);
+	open my $MEAN, "| gmt psxy -J -R -W2.0p,blue -O -K >> $out" or die;
+	foreach my $z (sort {$a <=> $b} keys %{$mean_ref}) {
+	    print {$MEAN} "$mean_ref->{$z} $z\n";
+	}
+	close $MEAN or die;
+        open my $LOW, "| gmt psxy -J -R -W2.0p,blue,- -O -K >> $out" or die;
+	foreach my $z (sort {$a <=> $b} keys %{$low_lim_ref}) {
+	    print {$LOW} "$low_lim_ref->{$z} $z\n";
+	}
+	close $LOW or die;
+	open my $UP, "| gmt psxy -J -R -W2.0p,blue,- -O -K >> $out" or die;
+	foreach my $z (sort {$a <=> $b} keys %{$up_lim_ref}) {
+	    print {$UP} "$up_lim_ref->{$z} $z\n";
+	}
+	close $UP or die;
+    }
 
     if ($param{vp_mode} == 0) {
 	system "gmt psscale -DJCB+ef+o0c/0.6c -C/tmp/vs.cpt " .
@@ -262,7 +288,7 @@ foreach my $itrc (1..$param{ntrc}) {
 	system "gawk '{print \$1, \$2, \$3}' $vp_file "
 	    . "| gmt xyz2grd -G/tmp/vp.grd -I$dbin_vp/$dbin_z "
 	    . "-R$vp_min/$vp_max/$z_min/$z_max";
-	system "gmt makecpt -Cocean -I -Z -T$zmin_vp/$zmax_vp/$dz_vp -Do > /tmp/vp.cpt";
+	system "gmt makecpt -Chaxby -I -Z -T$zmin_vp/$zmax_vp/$dz_vp -Do > /tmp/vp.cpt";
 	system "gmt grdimage /tmp/vp.grd -C/tmp/vp.cpt "
 	    . "-JX$width_vp/$hight_vp "
 	    . "-R0/$param{vp_max}/0/$param{z_max} "
@@ -317,6 +343,7 @@ foreach my $itrc (1..$param{ntrc}) {
 	    "-B$ztic_vp:\"Probability\": " .
 	    "-R -J -O >> $out";
     }
+    system "gmt psconvert $out -A -P -Tg";
 }
 
 
@@ -370,7 +397,7 @@ sub get_param {
 	}
 	elsif ($i == 10) {
 	    push @{$param{ipha}}, $item[0];
-	    next if (@{$param{ipha}} < $param{$ntrc});
+	    next if (@{$param{ipha}} < $param{ntrc});
 	}
 	elsif ($i == 11) {
 	    $param{nfft} = $item[0];
@@ -516,4 +543,64 @@ sub get_min_max {
     return $min, $max;
 }
 
+sub conf_int_2d {
+    my ($in, $alpha, $col) = @_;
+    my $p_thred = 0.5 * $alpha;
+    
+    # read input file
+    my %p;
+    open my $IN, "<", $in or die;
+    while (my $line = <$IN>) {
+        chomp $line;
+        my @item = split q{ }, $line;
+        if ($col == 1) {
+            my ($x, $y) = @item;
+            $p{$x+0}{$y+0} = $item[2];
+        }
+        else {
+            my ($y, $x) = @item;
+            $p{$x+0}{$y+0} = $item[2];
+        }
 
+    }
+    close $IN or die;
+    
+    # get x bins
+    my @xs = sort {$a <=> $b} keys %p; 
+ 
+
+    # calculate confidence interval along X-axis
+    my (%low_lim, %up_lim, %mean);
+    my ($ymin, $ymax, $dy);
+    foreach my $x (@xs) {
+        # determine lower limit
+        my @ys =  sort {$a <=> $b} keys %{$p{$x}};
+	my $p_cum = 0;
+	foreach my $y (@ys) {
+            $p_cum += $p{$x}{$y};
+            if ($p_cum >= $p_thred) {
+                $low_lim{$x} = $y;
+                last;
+            }
+
+        }
+        # deteremin upper limit
+        $p_cum = 0;
+        foreach my $y (reverse @ys) {
+            $p_cum += $p{$x}{$y};
+            if ($p_cum >= $p_thred) {
+                $up_lim{$x} = $y;
+                last;
+            }
+        }
+	
+        # determin mean
+        $p_cum = 0;
+        foreach my $y (@ys) {
+            $p_cum += $p{$x}{$y} * $y;
+        }
+        $mean{$x} = $p_cum;
+    }
+    
+    return \%low_lim, \%up_lim,  \%mean;
+}
