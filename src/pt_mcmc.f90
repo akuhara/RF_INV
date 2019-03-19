@@ -267,6 +267,62 @@ contains
     real(8) :: prop_rft(nfft, ntrc)
     integer :: ichain, ierr, itype
 
+    ! Proposal type
+    if (verb) then
+       write(*,*)
+       write(*,*) "Now checking proposal type"
+    end if
+    ntype = 4
+    itype_birth = 1
+    itype_death = 2
+    itype_z     = 3
+    itype_dvs   = 4
+    if (vp_mode == 1) then
+       ntype = ntype + 1
+       itype_dvp = ntype
+       if (verb) then
+          write(*,*)"dVp is solved"
+       end if
+    else if (vp_mode == 0) then
+       itype_dvp = -1
+       if (verb) then 
+          write(*,*)"dVp is fixed at 0"
+       end if
+    else
+       if (verb) then
+          write(*,*)"ERRPR: vp_mode sholud be 0 or 1"
+          write(*,*)  " 0: fixed, 1: solved"
+          call mpi_finalize(ierr)
+          stop
+       end if
+    end if
+    if (sig_mode == 1) then
+       ntype = ntype + 1
+       itype_sig = ntype
+    else
+       itype_sig = -1
+    end if
+
+    ! Make proposal label for output summary 
+    allocate(prop_label(ntype))
+    do itype = 1, ntype
+       if (itype == itype_birth) then
+          prop_label(itype) = "Birth proposal"
+       else if (itype == itype_death) then
+          prop_label(itype) = "Death proposal"
+       else if (itype == itype_z) then
+          prop_label(itype) = "Moving interface depth proposal"
+       else if (itype == itype_dvs) then
+          prop_label(itype) = "Perturbing dVs proposal"
+       else if (itype == itype_dvp) then
+          prop_label(itype) = "Perturbing dVs proposal"
+       else if (itype == itype_sig) then
+          prop_label(itype) = "Perturbing sigma proposal"
+       end if
+    end do
+    
+
+
     !allocate
     if (verb) then
        write(*,*)
@@ -325,59 +381,6 @@ contains
        end do
     end if
     
-    ! Proposal type
-    if (verb) then
-       write(*,*)
-       write(*,*) "Now checking proposal type"
-    end if
-    ntype = 4
-    itype_birth = 1
-    itype_death = 2
-    itype_z     = 3
-    itype_dvs   = 4
-    if (vp_mode == 1) then
-       ntype = ntype + 1
-       itype_dvp = ntype
-       if (verb) then
-          write(*,*)"dVp is solved"
-       end if
-    else if (vp_mode == 0) then
-       itype_dvp = -1
-       if (verb) then 
-          write(*,*)"dVp is fixed at 0"
-       end if
-    else
-       if (verb) then
-          write(*,*)"ERRPR: vp_mode sholud be 0 or 1"
-          write(*,*)  " 0: fixed, 1: solved"
-          call mpi_finalize(ierr)
-          stop
-       end if
-    end if
-    if (sig_mode == 1) then
-       ntype = ntype + 1
-       itype_sig = ntype
-    else
-       itype_sig = -1
-    end if
-
-    ! Make proposal label for output summary 
-    allocate(prop_label(ntype))
-    do itype = 1, ntype
-       if (itype == itype_birth) then
-          prop_label(itype) = "Birth proposal"
-       else if (itype == itype_death) then
-          prop_label(itype) = "Death proposal"
-       else if (itype == itype_z) then
-          prop_label(itype) = "Moving interface depth proposal"
-       else if (itype == itype_dvs) then
-          prop_label(itype) = "Perturbing dVs proposal"
-       else if (itype == itype_dvp) then
-          prop_label(itype) = "Perturbing dVs proposal"
-       else if (itype == itype_sig) then
-          prop_label(itype) = "Perturbing sigma proposal"
-       end if
-    end do
     
 
     return 
