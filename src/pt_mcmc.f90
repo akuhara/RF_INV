@@ -67,6 +67,7 @@ contains
     real(8) :: h(nlay_max), rho(nlay_max)
 
     
+    log_prior12 = 0.d0
     prop_k = k(ichain)
     prop_dvp(1:k_max)   = dvp(1:k_max, ichain)
     prop_dvs(1:k_max)   = dvs(1:k_max, ichain)
