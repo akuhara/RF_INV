@@ -35,6 +35,8 @@ module model
   real(8), allocatable :: vp_ref(:), vs_ref(:)
   real(8) :: dz_ref, z_ref_min, z_ref_max
   
+ 
+
 contains
   !=====================================================================
   ! generate initial model randomly 
@@ -66,14 +68,10 @@ contains
        is_valid = .false.
        do while (.not. is_valid)
           do i = 1, k(ichain)
-             !dvs(i, ichain) = dvs_min + grnd() * (dvs_max - dvs_min)
-             !dvp(i, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
              dvs(i, ichain) = gauss() * dvs_prior
              dvp(i, ichain) = gauss() * dvp_prior
           end do
           ! Bottom half-space
-          !dvs(k_max, ichain) = dvs_min + grnd() * (dvs_max - dvs_min)
-          !dvp(k_max, ichain) = dvp_min + grnd() * (dvp_max - dvp_min)
           dvs(k_max, ichain) = gauss() * dvs_prior
           dvp(k_max, ichain) = gauss() * dvp_prior
 
@@ -138,21 +136,6 @@ contains
     rewind(io_ref)
     do i = 1, nref
        read(io_ref,*) z_tmp, vp_ref(i), vs_ref(i)
-
-       ! Reference velocities are adjusted so that they can stay
-       ! within the given bounds
-       !if (vp_ref(i) + dvp_min < vp_min) then
-       !   vp_ref(i) = vp_min - dvp_min
-       !end if
-       !if (vp_ref(i) + dvp_max > vp_max) then
-       !   vp_ref(i) = vp_max - dvp_max
-       !end if
-       !if (vs_ref(i) + dvs_min < vs_min) then
-       !   vs_ref(i) = vs_min - dvs_min
-       !end if
-       !if (vs_ref(i) + dvs_max > vs_max) then
-       !   vs_ref(i) = vs_max - dvs_max
-       !end if
     end do
     close(io_ref)
     

@@ -29,11 +29,15 @@ module pt_mcmc
   use params
   implicit none 
   integer :: nmod 
-  integer, allocatable :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
-  integer, allocatable :: nprop(:), naccept(:)
-  integer, allocatable :: nvpz(:,:), nvsz(:,:)
-  real(8), allocatable :: likelihood_hist(:)
-  real(8) :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
+  integer, allocatable, public :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
+  integer, allocatable, public :: nprop(:), naccept(:)
+  integer, allocatable, public :: nvpz(:,:), nvsz(:,:)
+  real(8), allocatable, public :: likelihood_hist(:)
+  real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
+
+  integer, public :: ntype, itype_birth, itype_death
+  integer, public :: itype_dvs, itype_dvp, itype_sig, itype_z
+  character(clen_max), allocatable, public :: prop_label(:)
 
   public init_pt_mcmc
   private judge_mcmc, judge_pt, mcmc
@@ -74,19 +78,20 @@ contains
     ! Select proposal type
     itype = int(grnd() * ntype) + 1
 
-    if (itype == 1) then
+    ! Make Proposal
+
+    if (itype == itype_birth) then
        ! Birth proposal
        prop_k = prop_k + 1
        if (prop_k < k_max) then
-          !prop_dvp(prop_k) = dvp_min + grnd() * (dvp_max - dvp_min)
-          !prop_dvs(prop_k) = dvs_min + grnd() * (dvs_max - dvs_min)
           prop_dvp(prop_k) = gauss() * dvp_prior
           prop_dvs(prop_k) = gauss() * dvs_prior
           prop_z(prop_k)   = z_min   + grnd() * (z_max   - z_min)
        else 
           null_flag = .true.
        end if
-    else if (itype == 2) then
+       
+    else if (itype == itype_death) then
        ! Death proposal
        prop_k = prop_k - 1
        if (prop_k >= k_min) then
@@ -102,7 +107,8 @@ contains
        else
           null_flag = .true.
        end if
-    else if (itype == 3) then
+       
+    else if (itype == itype_z) then
        ! Move interface
        itarget = int(grnd() * prop_k) + 1
        prop_z(itarget) = prop_z(itarget) + gauss() * dev_z
@@ -110,15 +116,8 @@ contains
             & prop_z(itarget) > z_max) then
           null_flag = .true.
        end if
-    else if (itype == 4) then
-       ! Perturb noise sigma
-       itarget = int(grnd() * ntrc) + 1
-       prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
-       if (prop_sig(itarget) < sig_min .or. &
-            & prop_sig(itarget) > sig_max) then
-          null_flag = .true.
-       end if
-    else if (itype == 5) then
+       
+    else if (itype == itype_dvs) then
        ! Perturb dVs
        itarget = int(grnd() * (prop_k + 1)) + 1
        if (itarget == prop_k + 1) itarget = k_max
@@ -126,11 +125,8 @@ contains
        log_prior12 = &
             & log_prior_ratio(prop_dvs(itarget), &
             & dvs(itarget, ichain), dvs_prior)
-       !if (prop_dvs(itarget) < dvs_min .or. &
-       !     & prop_dvs(itarget) > dvs_max) then
-       !   null_flag = .true.
-       !end if
-    else 
+       
+    else if (itype == itype_dvp) then
        ! Perturb dVp
        itarget = int(grnd() * (prop_k + 1)) + 1
        if (itarget == prop_k + 1) itarget = k_max
@@ -139,17 +135,22 @@ contains
             & log_prior_ratio(prop_dvp(itarget), &
             & dvp(itarget, ichain), dvp_prior)
 
-       !if (prop_dvp(itarget) < dvp_min .or. &
-       !     & prop_dvp(itarget) > dvp_max) then
-       !   null_flag = .true.
-       !end if
+    else if (itype == itype_sig) then
+       ! Perturb noise sigma
+       itarget = int(grnd() * ntrc) + 1
+       prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
+       if (prop_sig(itarget) < sig_min .or. &
+            & prop_sig(itarget) > sig_max) then
+          null_flag = .true.
+       end if
     end if
     
+    ! Make velocity model
     if (.not. null_flag) then
        call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
             & nlay, alpha, beta, rho, h, is_valid)
     end if
-    if (.not. is_valid) then
+    if (.not. is_valid) then ! check velocity range
        null_flag = .true.
     end if
     
@@ -263,7 +264,7 @@ contains
     implicit none 
     logical, intent(in) :: verb
     real(8) :: prop_rft(nfft, ntrc)
-    integer :: ichain
+    integer :: ichain, ierr, itype
 
     !allocate
     if (verb) then
@@ -323,6 +324,61 @@ contains
        end do
     end if
     
+    ! Proposal type
+    if (verb) then
+       write(*,*)
+       write(*,*) "Now checking proposal type"
+    end if
+    ntype = 4
+    itype_birth = 1
+    itype_death = 2
+    itype_z     = 3
+    itype_dvs   = 4
+    if (vp_mode == 1) then
+       ntype = ntype + 1
+       itype_dvp = ntype
+       if (verb) then
+          write(*,*)"dVp is solved"
+       end if
+    else if (vp_mode == 0) then
+       itype_dvp = -1
+       if (verb) then 
+          write(*,*)"dVp is fixed at 0"
+       end if
+    else
+       if (verb) then
+          write(*,*)"ERRPR: vp_mode sholud be 0 or 1"
+          write(*,*)  " 0: fixed, 1: solved"
+          call mpi_finalize(ierr)
+          stop
+       end if
+    end if
+    if (sig_mode == 1) then
+       ntype = ntype + 1
+       itype_sig = ntype
+    else
+       itype_sig = -1
+    end if
+
+    ! Make proposal label for output summary 
+    allocate(prop_label(ntype))
+    do itype = 1, ntype
+       if (itype == itype_birth) then
+          prop_label(itype) = "Birth proposal"
+       else if (itype == itype_death) then
+          prop_label(itype) = "Death proposal"
+       else if (itype == itype_z) then
+          prop_label(itype) = "Moving interface depth proposal"
+       else if (itype == itype_dvs) then
+          prop_label(itype) = "Perturbing dVs proposal"
+       else if (itype == itype_dvp) then
+          prop_label(itype) = "Perturbing dVs proposal"
+       else if (itype == itype_sig) then
+          prop_label(itype) = "Perturbing sigma proposal"
+       end if
+    end do
+    
+
     return 
   end subroutine init_pt_mcmc
   

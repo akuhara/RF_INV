@@ -105,7 +105,7 @@ contains
   
   
   subroutine init_sig(verb)
-    use params, only: sig_min, sig_max, nchains, ntrc
+    use params, only: sig_min, sig_max, nchains, ntrc, sig_mode
     use mt19937
     implicit none 
     logical, intent(in) :: verb
@@ -114,11 +114,20 @@ contains
     
     allocate(sig(ntrc, nchains))
 
-    do ichain = 1, nchains
-       do itrc = 1, ntrc
-          sig(itrc, ichain) = sig_min + grnd() * (sig_max - sig_min)
+    if (sig_mode == 1) then
+       do ichain = 1, nchains
+          do itrc = 1, ntrc
+             sig(itrc, ichain) = sig_min + grnd() * (sig_max - sig_min)
+          end do
        end do
-    end do
+    else 
+       do ichain = 1, nchains
+          do itrc = 1, ntrc
+             sig(itrc, ichain) = sig_min
+          end do
+       end do
+    end if
+       
     
     if (verb) then
        write(*,*)

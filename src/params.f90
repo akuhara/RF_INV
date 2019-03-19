@@ -28,6 +28,8 @@
 module params
   implicit none 
 
+  ! Variables shown here are all for pulic use
+  
   ! constant
   integer, parameter :: clen_max = 200
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
@@ -69,8 +71,8 @@ module params
   character(clen_max) :: vel_file
   
   ! inversion setting
-  integer :: vp_mode
-  integer :: ntype
+  integer :: vp_mode, sig_mode
+  
   
   ! prior
   integer :: k_min, k_max
@@ -201,12 +203,7 @@ contains
     call get_line(io_param, line)
     read(line,*) vp_mode
     write(io_copy, *) vp_mode
-    if (vp_mode == 1) then
-       ntype = 6
-    else
-       ntype = 5
-    end if
-    
+
     call get_line(io_param, line)
     read(line,*) k_min, k_max
     write(io_copy, *) k_min, k_max
@@ -226,6 +223,17 @@ contains
     call get_line(io_param, line)
     read(line,*) sig_min, sig_max
     write(io_copy, *) sig_min, sig_max
+    if (sig_max - sig_min > 1.0e-5) then
+       sig_mode = 1
+       if (verb) then
+          write(*,*)"Sigma is solved"
+       end if
+    else
+       sig_mode = 0
+       if (verb) then
+          write(*,*) "Sigma is fixed at ", sig_min
+       end if
+    end if
     
     call get_line(io_param, line)
     read(line,*) dev_z

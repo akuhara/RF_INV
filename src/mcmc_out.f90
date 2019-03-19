@@ -72,22 +72,12 @@ contains
        
        if (verb) then
           write(*,*)"--- Summary ---"
-          write(*,*)"# of models to be sampled:", nmod_sum
-          write(*,*)"# of birth proposal:", &
-               & naccept_sum(1), "/", nprop_sum(1)
-          write(*,*)"# of death proposal:", &
-               & naccept_sum(2), "/", nprop_sum(2)
-          write(*,*)"# of moving interface proposal:", &
-               & naccept_sum(3), "/", nprop_sum(3)
-          write(*,*)"# of perturbing noise sigma proposal:", &
-               & naccept_sum(4), "/", nprop_sum(4)
-          write(*,*)"# of perturbing Vs proposal:", &
-               & naccept_sum(5), "/", nprop_sum(5)
-          if (vp_mode == 1) then
-             write(*,*)"# of perturbing Vp proposal:", &
-                  & naccept_sum(6), "/", nprop_sum(6)
-          end if
-             write(*,*)
+          write(*,*)"# of sampled models:", nmod_sum
+          do i = 1, ntype
+             write(*,*)"# of ", trim(prop_label(i)), ": ", &
+             & naccept_sum(i), "/", nprop_sum(i)
+          end do
+          write(*,*)
        end if
        
        ! Transition of Likelihood 
