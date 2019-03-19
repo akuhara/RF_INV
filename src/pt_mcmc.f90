@@ -200,10 +200,12 @@ contains
        nk(k(ichain)) = nk(k(ichain)) + 1
        
        ! Noise sigma
-       do itrc = 1, ntrc
-          ibin = int((sig(itrc, ichain) - sig_min) / dbin_sig) + 1
-          nsig(ibin, itrc) = nsig(ibin, itrc) + 1
-       end do
+       if (sig_mode == 1) then
+          do itrc = 1, ntrc
+             ibin = int((sig(itrc, ichain) - sig_min) / dbin_sig) + 1
+             nsig(ibin, itrc) = nsig(ibin, itrc) + 1
+          end do
+       end if
 
        ! Interface depth
        do ilay = 1, k(ichain) - 1
@@ -409,6 +411,7 @@ contains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
+       write(*,*)it, ncorr
        if (rank == 1 .and. mod(it, ncorr) == 0) then
           write(*,*)"Iteration #:", it, "/", n_tot_iter
        end if
