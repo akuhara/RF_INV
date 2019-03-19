@@ -90,7 +90,7 @@ contains
           stop
        end if
        do it = 1, nburn + niter
-          write(io_lkhd,*)it, likelihood_hist(it) / dble(ncool * nproc)
+          write(io_lkhd,*)it, likelihood_hist_av(it) / dble(ncool * nproc)
        end do
        close(io_lkhd)
 

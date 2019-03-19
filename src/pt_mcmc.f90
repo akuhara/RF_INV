@@ -184,6 +184,14 @@ contains
        nprop(itype) = nprop(itype) + 1
        if (yn) naccept(itype) = naccept(itype) + 1
 
+
+       if (log_likelihood(ichain) == 0.d0)then
+          write(*,*)"Zero log-likelihood --Something wrong?"
+          write(*,*)"acceptance ", yn
+          write(*,*)"Valid model", is_valid
+       end if
+          
+       
        likelihood_hist(iter) = &
             likelihood_hist(iter) + log_likelihood(ichain)
        
