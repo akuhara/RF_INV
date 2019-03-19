@@ -411,7 +411,6 @@ contains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
-       write(*,*)it, ncorr
        if (rank == 1 .and. mod(it, ncorr) == 0) then
           write(*,*)"Iteration #:", it, "/", n_tot_iter
        end if
