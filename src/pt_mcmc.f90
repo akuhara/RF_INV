@@ -157,7 +157,7 @@ contains
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       if (itype /= 4) then
+       if (itype /= itype_sig) then
           fwd_flag = .true.
        else
           fwd_flag = .false.
