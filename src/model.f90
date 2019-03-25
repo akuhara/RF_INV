@@ -30,12 +30,13 @@ module model
   use mt19937
   use sort
   implicit none 
-  integer, allocatable :: k(:)
-  real(8), allocatable :: dvp(:,:), dvs(:,:), z(:,:)
-  real(8), allocatable :: vp_ref(:), vs_ref(:)
-  real(8) :: dz_ref, z_ref_min, z_ref_max
+  integer, allocatable, public :: k(:)
+  real(8), allocatable, public :: dvp(:,:), dvs(:,:), z(:,:)
+  real(8), allocatable, public :: vp_ref(:), vs_ref(:)
+  real(8), public :: dz_ref, z_ref_min, z_ref_max
   
- 
+  public init_model, format_model
+  private vp_to_rho
 
 contains
   !=====================================================================
@@ -258,10 +259,6 @@ contains
     return 
   end subroutine format_model
   
-  !=====================================================================
-  subroutine check_model
-    
-  end subroutine check_model
   !=====================================================================
 
   real(8) function vp_to_rho(a1) result(p)

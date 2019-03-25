@@ -77,12 +77,16 @@ program main
    ! Initialize FFTW
    call init_fftw()
 
-   call init_forward(verb)
+
+   
    ! Read reference velocity model
    call read_ref_model(verb)
 
    ! Generate initial model
    call init_model(verb)
+
+   ! Initialize forward computation
+   call init_forward(verb)
    
    call init_likelihood(verb)
    
