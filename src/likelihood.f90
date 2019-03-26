@@ -96,7 +96,7 @@ contains
             & - dble(nsmp) * log(s)
 
     end do
-    
+
     return 
   end subroutine calc_likelihood
 
@@ -162,8 +162,6 @@ contains
             & log_likelihood(ichain), rft(:,:,ichain))
     end do
     
-    
-
     return 
   end subroutine init_rft
   

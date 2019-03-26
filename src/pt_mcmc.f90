@@ -32,6 +32,7 @@ module pt_mcmc
   integer, allocatable, public :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
   integer, allocatable, public :: nprop(:), naccept(:)
   integer, allocatable, public :: nvpz(:,:), nvsz(:,:)
+  real(8), allocatable, public :: vp_mean(:), vs_mean(:)
   real(8), allocatable, public :: likelihood_hist(:)
   real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
@@ -229,7 +230,13 @@ contains
           ivs = max(1, ivs) ! for ocean layer where beta(1) < vs_min
           do iz = iz1, iz2 - 1
              nvpz(iz, ivp) = nvpz(iz, ivp) + 1
+             vp_mean(iz) = vp_mean(iz) + alpha(ilay)
              nvsz(iz, ivs) = nvsz(iz, ivs) + 1
+             if (beta(ilay) > 0.d0) then
+                vs_mean(iz) = vs_mean(iz) + beta(ilay)
+             else
+                vs_mean(iz) = vs_min
+             end if
           end do
           tmpz = tmpz + h(ilay)
        end do
@@ -332,6 +339,7 @@ contains
     allocate(nk(k_max), nz(nbin_z), nsig(nbin_sig, ntrc))
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
+    allocate(vp_mean(nbin_z), vs_mean(nbin_z))
     allocate(nprop(ntype), naccept(ntype))
     allocate(likelihood_hist(niter + nburn))
     
@@ -341,6 +349,8 @@ contains
     namp = 0
     nvpz = 0
     nvsz = 0
+    vp_mean = 0.d0
+    vs_mean = 0.d0
     nmod = 0
     naccept = 0
     nprop = 0

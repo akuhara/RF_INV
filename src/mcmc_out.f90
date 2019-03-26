@@ -43,6 +43,7 @@ contains
     integer :: nvsz_sum(nbin_z, nbin_vs), nvpz_sum(nbin_z, nbin_vp)
     integer :: nsig_sum(nbin_sig, ntrc), nz_sum(nbin_z)
     real(8) :: likelihood_hist_av(nburn + niter)
+    real(8) :: vp_mean_sum(nbin_z), vs_mean_sum(nbin_z)
     character(clen_max) :: out_file
     
     call mpi_reduce(nmod, nmod_sum, 1, MPI_INTEGER4, MPI_SUM, &
@@ -65,7 +66,11 @@ contains
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call mpi_reduce(likelihood_hist, likelihood_hist_av, &
          & nburn + niter, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
-    
+    call mpi_reduce(vp_mean, vp_mean_sum, nbin_z, MPI_REAL8, &
+         & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    call mpi_reduce(vs_mean, vs_mean_sum, nbin_z, MPI_REAL8, &
+         & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+
     
 
     if (rank == 0) then
@@ -200,6 +205,37 @@ contains
           end do
        end do
        close(io_vpz)
+
+       ! Vs mean
+       out_file = trim(out_dir) // "/" // "vs_z.mean"
+       open(io_vs_mean, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create ", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do iz = 1, nbin_z
+          write(io_vs_mean,'(2F10.5)')  dble(vs_mean_sum(iz)) / &
+               & dble(nmod_sum), (iz - 0.5d0) * dbin_z
+       end do
+       close(io_vs_mean)
+       
+       ! Vp mean
+       out_file = trim(out_dir) // "/" // "vp_z.mean"
+       open(io_vp_mean, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create ", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do iz = 1, nbin_z
+          write(io_vp_mean,'(2F10.5)')  dble(vp_mean_sum(iz)) / &
+               & dble(nmod_sum), (iz - 0.5d0) * dbin_z
+       end do
+       close(io_vp_mean)
+       
     end if
 
     return 

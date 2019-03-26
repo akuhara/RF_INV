@@ -206,8 +206,11 @@ class InvRslt:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.ylim([z_max + del_z, 0])
-        cbar = plt.colorbar()
-        cbar.ax.set_ylabel(zlabel)
+
+        if ((vtype == "vs" and int(param["vp_mode"]) == 0) or \
+            vtype == "vp"):
+            cbar = plt.colorbar()
+            cbar.ax.set_ylabel(zlabel)
 
         # plot reference velocity 
         xlabel2 = "Depth (km)"
@@ -215,11 +218,18 @@ class InvRslt:
         zlabel2 = "S wave velocity (km/s)"
         df = pd.read_csv(param["vel_file"], delim_whitespace=True, \
                          header=None, names=(xlabel2, ylabel2, zlabel2))
+
+        # for legend 
+        lines = []
+        labels = []
+        
         # reference velocity 
         if (vtype == "vs"):
-            plt.plot(df[zlabel2], df[xlabel2], color="black")
+            line, = plt.plot(df[zlabel2], df[xlabel2], color="black")
         elif (vtype == "vp"):
-            plt.plot(df[ylabel2], df[xlabel2], color="black")
+            line, = plt.plot(df[ylabel2], df[xlabel2], color="black")
+        lines.append(line)
+        labels.append("Reference model")
             
         # plot 1-sigma bound
 
@@ -242,45 +252,92 @@ class InvRslt:
         
         if (vtype == "vs"):
             plt.plot(df_up[zlabel2], df_up[xlabel2], color="black", \
-                     linestyle="dashed")
+                     linestyle="dashed", label=None)
             plt.plot(df_low[zlabel2], df_low[xlabel2], color="black", \
-                     linestyle="dashed")
+                     linestyle="dashed", label=None)
         elif (vtype == "vp"):
             plt.plot(df_up[ylabel2], df_up[xlabel2], color="black", \
                      linestyle="dashed")
             plt.plot(df_low[ylabel2], df_low[xlabel2], color="black", \
                      linestyle="dashed")
-            
+
+        # Meam model
+        ylabel3 = "Depth (km)"
+        if (vtype == "vs"):
+            mean_file = param["outdir"] + "/" + "vs_z.mean"
+            xlabel3 = "S wave velocity (km/s)"
+        elif (vtype == "vp"):
+            mean_file = param["outdir"] + "/" + "vp_z.mean"
+            xlabel3 = "P wave velocity (km/s)"
         
+        df = pd.read_csv(mean_file, delim_whitespace=True, \
+                         header=None, names=(xlabel3, ylabel3))
+        line, = plt.plot(df[xlabel3], df[ylabel3], color="blue")
+        lines.append(line)
+        labels.append("Mean model")
+        plt.legend(lines, labels)
+        
+            
+    #------------------------------------------------------------------    
+
+    def plot_likelihood(self, ax):
+        param = self.param
+        xlabel = "Iteration number"
+        ylabel = "Log-likelihood"
+        rslt_file = param["outdir"] + "/" + "likelihood"
+        x1 = int(param["nburn"]) + 1
+        x2 = x1 + int(param["niter"]) - 1
+        
+        df = pd.read_csv(rslt_file, delim_whitespace=True, \
+                         header=None, names=(xlabel, ylabel))
+        df.plot(x=xlabel, y=ylabel, ax=ax, kind="line", legend=None)
+        plt.xscale("log")
+        plt.ylabel(ylabel)
+        plt.axvspan(x1, x2, facecolor="orange")
+        
+    
     #------------------------------------------------------------------    
     def make_figure(self, trace_id):
+        
+        grid_geom = (5, 2)
+
         param = self.param
         sns.set()
         sns.set_style('ticks')
-        plt.figure(figsize=(9, 40))
+        plt.figure(figsize=(9, 12))
         
         # Adjust intervals between suplots
         plt.subplots_adjust(wspace=0.6, hspace=0.6)
 
-        ax = plt.subplot2grid((4, 2), (0, 0))
+        ax = plt.subplot2grid(grid_geom, (0, 0))
         self.plot_num_interface(ax)
         
         if (float(param["sig_max"]) - float(param["sig_min"]) > 1.0e-5):
-            ax = plt.subplot2grid((4, 2), (0, 1))
+            ax = plt.subplot2grid(grid_geom, (0, 1))
             self.plot_sigma(ax, trace_id)
             
-        ax = plt.subplot2grid((4, 2), (1, 0), colspan=2)
+        ax = plt.subplot2grid(grid_geom, (1, 0))
+        self.plot_likelihood(ax)
+
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2)
         self.plot_syn_trace(ax, trace_id)
 
-        ax = plt.subplot2grid((4, 2), (2, 0), rowspan=2)
+        ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2)
         self.plot_v_z(ax, vtype='vs')
 
-        if (param["vp_mode"] == 1):
-            ax = plt.subplot2grid((4, 2), (2, 1), rowspan=2)
+        if (int(param["vp_mode"]) == 1):
+            ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2)
             self.plot_v_z(ax, vtype='vp')
+            
+
         
-        plt.show()
-        
+        png_file = param["outdir"] + "/" + "plot" +  str(trace_id).zfill(2) \
+                   + ".png"
+        print(png_file)
+        plt.savefig(png_file)
+        #plt.show()
+  
+
 #=======================================================================
 
 if __name__ == "__main__":
@@ -295,7 +352,7 @@ if __name__ == "__main__":
     rslt = InvRslt(param_file)
     rslt.read_param_file()
     rslt.read_sac(0)
-
+    print(rslt.param)
     for itrc in range (1, int(rslt.param["ntrc"]) + 1):
         rslt.make_figure(itrc)
 
