@@ -84,6 +84,9 @@ module params
   ! proposal
   real(8) :: dev_z, dev_dvs, dev_dvp, dev_sig
 
+  integer, public :: ntype, itype_birth, itype_death
+  integer, public :: itype_dvs, itype_dvp, itype_sig, itype_z
+
   ! output
   integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig
   real(8) :: amp_min, amp_max, vp_min, vp_max, vs_min, vs_max

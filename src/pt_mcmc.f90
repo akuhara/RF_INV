@@ -35,8 +35,8 @@ module pt_mcmc
   real(8), allocatable, public :: likelihood_hist(:)
   real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
 
-  integer, public :: ntype, itype_birth, itype_death
-  integer, public :: itype_dvs, itype_dvp, itype_sig, itype_z
+  !integer, public :: ntype, itype_birth, itype_death
+  !integer, public :: itype_dvs, itype_dvp, itype_sig, itype_z
   character(clen_max), allocatable, public :: prop_label(:)
 
   public init_pt_mcmc
@@ -61,7 +61,7 @@ contains
     integer :: prop_k
     integer :: itype, itarget, ilay, ibin, iz1, iz2, itrc, iz
     integer :: ivp, ivs, it
-    logical :: null_flag, yn, fwd_flag, is_valid
+    logical :: null_flag, yn, is_valid
     integer :: nlay
     real(8) :: alpha(nlay_max), beta(nlay_max)
     real(8) :: h(nlay_max), rho(nlay_max)
@@ -75,10 +75,11 @@ contains
     prop_sig(1:ntrc)    = sig(1:ntrc, ichain)
 
     null_flag = .false.
+    is_valid = .false.
 
     ! Select proposal type
-    itype = int(grnd() * ntype) + 1
-
+    !itype = int(grnd() * ntype) + 1
+    itype = itype_dvs
     ! Make Proposal
 
     if (itype == itype_birth) then
@@ -126,7 +127,6 @@ contains
        log_prior12 = &
             & log_prior_ratio(prop_dvs(itarget), &
             & dvs(itarget, ichain), dvs_prior)
-       
     else if (itype == itype_dvp) then
        ! Perturb dVp
        itarget = int(grnd() * (prop_k + 1)) + 1
@@ -150,19 +150,29 @@ contains
     if (.not. null_flag) then
        call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
             & nlay, alpha, beta, rho, h, is_valid)
+       if (is_valid) then
+          if (itype == itype_dvs .or. itype == itype_dvp) then
+             if (beta(1) < 0.d0) then
+                ilay = itarget + 1
+             else
+                ilay = itarget
+             end if
+             
+             if (itarget /= k_max) then
+                call change_layer_matrix_sol(ilay, ichain, alpha(ilay), &
+                     & beta(ilay), rho(ilay), h(ilay))
+             end if
+          end if
+       else
+          null_flag = .true.
+       end if
     end if
-    if (.not. is_valid) then ! check velocity range
-       null_flag = .true.
-    end if
+    
+    
     
     ! evaluate proposed model
     if (.not. null_flag) then
-       if (itype /= itype_sig) then
-          fwd_flag = .true.
-       else
-          fwd_flag = .false.
-       end if
-       call calc_likelihood(ichain, fwd_flag, &
+       call calc_likelihood(ichain, itype, &
             & prop_k, prop_z, prop_dvp, prop_dvs, &
             & prop_sig, prop_log_likelihood, prop_rft)
        call judge_mcmc(temp, log_likelihood(ichain), &
@@ -409,7 +419,7 @@ contains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
-       if (rank == 1 .and. mod(it, ncorr) == 0) then
+       if (rank == 0 .and. mod(it, ncorr) == 0) then
           write(*,*)"Iteration #:", it, "/", n_tot_iter
        end if
        ! Within-chain step for all chains

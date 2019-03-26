@@ -50,8 +50,8 @@ src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
               forward.mod pt_mcmc.mod mcmc_out.mod
 src/fftw.o: params.mod
 src/model.o: params.mod mt19937.mod sort.mod math.mod prior.mod
-src/likelihood.o: params.mod model.mod forward.mod
-src/forward.o: params.mod fftw.mod model.mod
+src/likelihood.o: params.mod model.mod forward.mod 
+src/forward.o: params.mod fftw.mod model.mod 
 src/pt_mcmc.o: params.mod mt19937.mod model.mod likelihood.mod math.mod \
 	       prior.mod
 src/mcmc_out.o: params.mod

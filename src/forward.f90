@@ -38,7 +38,7 @@ module forward
   
   logical :: is_ray_common
 
-  public init_forward, calc_rf
+  public init_forward, calc_rf, change_layer_matrix_sol
   private init_filter, calc_seis, &
        & e_inverse, layer_matrix_sol, layer_matrix_liq, &
        & water_level_decon, check_ray, init_propagator
@@ -67,9 +67,10 @@ contains
     real(8) :: omega, df
     real(8) :: alpha(nlay_max), beta(nlay_max), rho(nlay_max), h(nlay_max)
     logical :: is_valid
+    complex(kind(0d0)) :: p_mat(4,4)
     
     nhalf = nfft / 2 + 1
-    allocate(propagator(4, 4, k_max, nhalf, ntrc, nchains))
+    allocate(propagator(4, 4, nlay_max, nhalf, ntrc, nchains))
     propagator = (0.d0, 0.d0)
 
     df = 1.d0 / (nfft * delta)
@@ -87,16 +88,18 @@ contains
        
        do itrc = 1, ntrc
           do iomega = 1, nhalf
-             omega = df * (iomega - 1)
+             
+                
+             omega = 2.d0 * pi * df * (iomega - 1)
              if (iomega == 1) then
                 omega = 1.0e-5
-             end if 
-             do ilay = ilay0, nlay
-                write(*,*)rayps(itrc), omega, alpha(ilay), beta(ilay), &
-                     & rho(ilay), h(ilay)
+             end if
+             do ilay = ilay0, nlay - 1
+                
                 call layer_matrix_sol(omega, rho(ilay), alpha(ilay), &
                      & beta(ilay), rayps(itrc), h(ilay), &
                      & propagator(1:4, 1:4, ilay, iomega, itrc, ichain))
+                
              end do
           end do
        end do
@@ -104,6 +107,33 @@ contains
     
     return 
   end subroutine init_propagator
+
+  !=====================================================================
+
+  subroutine change_layer_matrix_sol(ilay, ichain, alpha, beta, rho, h)
+    use params
+    implicit none 
+    integer, intent(in) :: ilay, ichain
+    real(8), intent(in) :: alpha, beta, rho, h
+    real(8) :: df, omega
+    integer :: itrc, iomega, nhalf
+    
+    df = 1.d0 / (nfft * delta)
+    nhalf = nfft / 2 + 1
+    do itrc = 1, ntrc
+       do iomega = 1, nhalf
+          omega = 2.d0 * pi * df * (iomega - 1)
+          if (iomega == 1) then
+             omega = 1.0e-5
+          end if
+          call layer_matrix_sol(omega, rho, alpha, beta, &
+               & rayps(itrc), h, &
+               propagator(1:4, 1:4, ilay, iomega, itrc, ichain))
+       end do
+    end do
+    
+    return 
+  end subroutine change_layer_matrix_sol
 
   !=====================================================================
   subroutine check_ray(verb)
@@ -171,7 +201,7 @@ contains
   !=====================================================================
   
   subroutine calc_rf(chain_id, nlay, n, ntrc, rayps, &
-       & alpha, beta, rho, h, rft)
+       & alpha, beta, rho, h, itype, rft)
     use fftw
     use params, only : delta, a_gus, deconv_mode, t_start, ipha
     implicit none 
@@ -179,6 +209,7 @@ contains
     real(8), intent(in) :: rayps(ntrc)
     real(8), intent(in) :: alpha(nlay), beta(nlay), rho(nlay)
     real(8), intent(in) :: h(nlay)
+    integer, intent(in) :: itype
     real(8), intent(out) :: rft(n, ntrc)
     complex(kind(0d0)) :: freq_r(n), freq_v(n)
     complex(kind(0d0)) :: rff(n)
@@ -192,7 +223,7 @@ contains
        
 
        if (itrc == 1 .or. .not. is_ray_common) then
-          call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), &
+          call calc_seis(itrc, chain_id, itype, nlay, n, rayps(itrc), &
                & ipha(itrc), alpha, beta, rho, h, freq_r, freq_v)
           
           freq_r = conjg(freq_r)
@@ -254,11 +285,11 @@ contains
   
   !=====================================================================
   
-  subroutine calc_seis(trc_id, chain_id, nlay, npts, &
+  subroutine calc_seis(trc_id, chain_id, itype, nlay, npts, &
        & rayp, ipha, alpha, beta, rho, h, ur_freq, uz_freq)
-    use params, only: delta
+    use params, only: delta, itype_dvs, itype_dvp
     implicit none
-    integer, intent(in) :: nlay, ipha, npts, trc_id, chain_id
+    integer, intent(in) :: nlay, ipha, npts, trc_id, chain_id, itype
     real(8), intent(in) :: alpha(nlay), beta(nlay)
     real(8), intent(in) :: rho(nlay), h(nlay)
     real(8), intent(in) :: rayp
@@ -295,16 +326,23 @@ contains
        call e_inverse(omg, rho(nlay), alpha(nlay), beta(nlay), &
             & rayp, e_inv)
        
-       ! Calculate production of propagtor matrix of 
+       ! Clculate production of propagtor matrix of 
        ! all layers
        p_prod = (0.d0, 0.d0)
        do j = 1, 4
           p_prod(j,j) =(1.d0, 0.d0)
        end do
        do ilay = ilay0, nlay - 1
-          call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
-               & beta(ilay), rayp, h(ilay), p_mat)
-          p_prod = matmul(p_mat, p_prod)
+
+          if (itype == itype_dvp .or. itype == itype_dvs) then
+             p_prod = &
+                  matmul(propagator(1:4, 1:4, ilay, iomg, trc_id, chain_id), &
+                  & p_prod)
+          else
+             call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
+                  & beta(ilay), rayp, h(ilay), p_mat)
+             p_prod = matmul(p_mat, p_prod)
+          end if
        end do
        sl = matmul(e_inv, p_prod)
 

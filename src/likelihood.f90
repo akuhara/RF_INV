@@ -53,14 +53,15 @@ contains
     
   !=====================================================================
 
-  subroutine calc_likelihood(chain_id, fwd_flag, prop_k, prop_z, &
+  subroutine calc_likelihood(chain_id, itype, prop_k, prop_z, &
        & prop_dvp, prop_dvs, sig, prop_log_likelihood, prop_rft)
     use params
     use forward
     use model
     implicit none
     integer, intent(in) :: prop_k, chain_id
-    logical, intent(in) :: fwd_flag
+    !logical, intent(in) :: fwd_flag
+    integer, intent(in) :: itype
     real(8), intent(in) :: prop_z(k_max-1), prop_dvp(k_max) 
     real(8), intent(in) :: prop_dvs(k_max), sig(ntrc)
     real(8), intent(out) :: prop_log_likelihood
@@ -71,14 +72,14 @@ contains
     real(8), parameter :: pi = 3.1415926535897931
     logical :: is_valid
     
-    if (fwd_flag) then
+    if (itype == itype_sig) then
+       prop_rft(1:nfft, 1:ntrc) = rft(1:nfft, 1:ntrc, chain_id) 
+    else
        call format_model(prop_k, prop_z, prop_dvp, prop_dvs, &
             & nlay, alpha, beta, rho, h, is_valid)
-
+       
        call calc_rf(chain_id, nlay, nfft, ntrc, rayps, &
-            & alpha, beta, rho, h, prop_rft)
-    else
-       prop_rft(1:nfft, 1:ntrc) = rft(1:nfft, 1:ntrc, chain_id) 
+            & alpha, beta, rho, h, itype, prop_rft)
     end if
     
     
@@ -144,20 +145,17 @@ contains
   !=====================================================================
   
   subroutine init_rft()
-    use params, only: nfft, ntrc, nchains
+    use params, only: nfft, ntrc, nchains, itype_birth
     use model, only: k, z, dvp, dvs
     implicit none 
     integer :: ichain
-    logical :: fwd_flag
     
 
     allocate(rft(nfft, ntrc, nchains))
     allocate(log_likelihood(nchains))
     
-    fwd_flag = .true.
-    
     do ichain = 1, nchains
-       call calc_likelihood(ichain, fwd_flag, k(ichain), z(:,ichain), &
+       call calc_likelihood(ichain, itype_birth, k(ichain), z(:,ichain), &
             & dvp(:,ichain), dvs(:,ichain), sig(:,ichain), &
             & log_likelihood(ichain), rft(:,:,ichain))
     end do
