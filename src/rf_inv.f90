@@ -36,9 +36,10 @@ program main
    use mcmc_out
    implicit none 
    include "mpif.h"
-   integer :: nproc, rank, ierr, iarg
+   integer :: nproc, rank, ierr, iarg, i
    logical :: verb
    character(clen_max) :: param_file
+       
 
    ! Initialize MPI 
    call mpi_init(ierr)

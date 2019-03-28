@@ -86,8 +86,14 @@ contains
        ! Birth proposal
        prop_k = prop_k + 1
        if (prop_k < k_max) then
-          prop_dvp(prop_k) = gauss() * dvp_prior
-          prop_dvs(prop_k) = gauss() * dvs_prior
+          if (prior_mode == 1) then
+             prop_dvp(prop_k) = laplace() * dvp_prior
+             prop_dvs(prop_k) = laplace() * dvs_prior
+          else if (prior_mode == 2) then
+             prop_dvp(prop_k) = gauss() * dvp_prior
+             prop_dvs(prop_k) = gauss() * dvs_prior
+          end if
+
           prop_z(prop_k)   = z_min   + grnd() * (z_max   - z_min)
        else 
           null_flag = .true.
@@ -126,7 +132,7 @@ contains
        prop_dvs(itarget) = prop_dvs(itarget) + gauss() * dev_dvs
        log_prior12 = &
             & log_prior_ratio(prop_dvs(itarget), &
-            & dvs(itarget, ichain), dvs_prior)
+            & dvs(itarget, ichain), dvs_prior, prior_mode)
        
     else if (itype == itype_dvp) then
        ! Perturb dVp
@@ -135,7 +141,7 @@ contains
        prop_dvp(itarget) = prop_dvp(itarget) + gauss() * dev_dvp
        log_prior12 = &
             & log_prior_ratio(prop_dvp(itarget), &
-            & dvp(itarget, ichain), dvp_prior)
+            & dvp(itarget, ichain), dvp_prior, prior_mode)
 
     else if (itype == itype_sig) then
        ! Perturb noise sigma

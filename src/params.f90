@@ -79,6 +79,8 @@ module params
   integer :: k_min, k_max
   real(8) :: z_min, z_max
   !real(8) :: dvs_min, dvs_max, dvp_min, dvp_max
+
+  integer :: prior_mode
   real(8) :: dvs_prior, dvp_prior
   real(8) :: sig_min, sig_max
   
@@ -214,6 +216,10 @@ contains
     write(io_copy, *) z_min, z_max
 
     call get_line(io_param, line)
+    read(line, *) prior_mode
+    write(io_copy, *) prior_mode
+
+    call get_line(io_param, line)
     read(line,*) dvs_prior
     write(io_copy, *) dvs_prior
 
@@ -320,6 +326,7 @@ contains
        write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
        write(*,*)"Min./Max. # of interfaces              : ", k_min, k_max
        write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
+       write(*,*)"Prior mode for velocity perturbation   : ", prior_mode
        write(*,*)"Standard deviation for dVs prior       : ", dvs_prior
        write(*,*)"Standard deviation for dVp prior       : ", dvp_prior
        write(*,*)"Min./Max. of noise sigma prior         : ", sig_min, sig_max

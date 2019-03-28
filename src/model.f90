@@ -68,13 +68,24 @@ contains
        is_valid = .false.
        do while (.not. is_valid)
           do i = 1, k(ichain)
-             dvs(i, ichain) = gauss() * dvs_prior
-             dvp(i, ichain) = gauss() * dvp_prior
+
+             if (prior_mode == 1) then
+                dvs(i, ichain) = laplace() * dvs_prior
+                dvp(i, ichain) = laplace() * dvp_prior
+             else if (prior_mode == 2) then
+                dvs(i, ichain) = gauss() * dvs_prior
+                dvp(i, ichain) = gauss() * dvp_prior
+             end if
           end do
           ! Bottom half-space
-          dvs(k_max, ichain) = gauss() * dvs_prior
-          dvp(k_max, ichain) = gauss() * dvp_prior
 
+          if (prior_mode == 1) then
+             dvs(k_max, ichain) = laplace() * dvs_prior
+             dvp(k_max, ichain) = laplace() * dvp_prior
+          else if (prior_mode == 2) then
+             dvs(k_max, ichain) = gauss() * dvs_prior
+             dvp(k_max, ichain) = gauss() * dvp_prior
+          end if
           call format_model(k(ichain), z(1:k_max-1, ichain), &
                & dvp(1:k_max, ichain), dvs(1:k_max, ichain), &
                & nlay, alpha, beta, rho, h, is_valid)
