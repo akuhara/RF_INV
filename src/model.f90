@@ -61,12 +61,14 @@ contains
     z   = 0.d0
     do ichain = 1, nchains
        k(ichain) = k_min + int(grnd() * (k_max - k_min))
-       write(*,*)k(ichain)
-       do i = 1, k(ichain)
-          z(i, ichain) = z_min + grnd() * (z_max - z_min)
-       end do
+       !k(ichain) = k_min
        is_valid = .false.
+
        do while (.not. is_valid)
+          do i = 1, k(ichain)
+             z(i, ichain) = z_min + grnd() * (z_max - z_min)
+          end do
+          
           do i = 1, k(ichain)
 
              if (prior_mode == 1) then
@@ -219,7 +221,13 @@ contains
     end if
     rho(i) = vp_to_rho(alpha(i))
     h(i)   = tmp_z(1) - sdep
-
+    !------------------------
+    if (h(i) < h_min) then
+       is_valid = .false.
+       !write(*,*)"FALSE"
+    end if
+    !------------------------
+    
     ! Middle layer
     do j = 2, prop_k
        i = i + 1
@@ -240,7 +248,12 @@ contains
        end if
        rho(i) = vp_to_rho(alpha(i))
        h(i)   = tmp_z(j) - tmp_z(j-1)
-
+       !------------------------
+       if (h(i) < h_min) then
+          is_valid = .false.
+       !   !write(*,*)"FALSE"
+       end if
+       !------------------------
     end do
 
     ! Half space

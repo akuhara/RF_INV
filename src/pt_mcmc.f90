@@ -32,6 +32,8 @@ module pt_mcmc
   integer, allocatable, public :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
   integer, allocatable, public :: nprop(:), naccept(:)
   integer, allocatable, public :: nvpz(:,:), nvsz(:,:)
+  real(8), allocatable, public :: vp_model(:,:), vs_model(:,:)
+  real(8), allocatable, public :: all_likelihood(:)
   real(8), allocatable, public :: vp_mean(:), vs_mean(:)
   real(8), allocatable, public :: likelihood_hist(:)
   real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
@@ -74,14 +76,25 @@ contains
     prop_dvs(1:k_max)   = dvs(1:k_max, ichain)
     prop_z(1:k_max - 1) = z(1:k_max - 1, ichain)
     prop_sig(1:ntrc)    = sig(1:ntrc, ichain)
-
+    
+    yn = .false.
     null_flag = .false.
 
     ! Select proposal type
     itype = int(grnd() * ntype) + 1
+    
+    ! Prior
+    !if (iter < int(nburn * 0.25)) then
+    !   dvs_prior = 0.05
+    !else if (iter < int(nburn * 0.5)) then
+    !   dvs_prior = 0.07
+    !else if (iter < int(nburn * 0.75)) then
+    !   dvs_prior = 0.1
+    !else
+    !   dvs_prior = 0.15
+    !end if
 
     ! Make Proposal
-
     if (itype == itype_birth) then
        ! Birth proposal
        prop_k = prop_k + 1
@@ -198,8 +211,9 @@ contains
     if (temp <= 1.d0 + 1.0e-6 .and. iter > nburn .and. &
          & mod(iter, ncorr) == 0) then
        
-       nmod = nmod + 1
 
+       nmod = nmod + 1
+       all_likelihood(nmod) = log_likelihood(ichain)
        
        ! # of layer interfaces
        nk(k(ichain)) = nk(k(ichain)) + 1
@@ -237,11 +251,14 @@ contains
           do iz = iz1, iz2 - 1
              nvpz(iz, ivp) = nvpz(iz, ivp) + 1
              vp_mean(iz) = vp_mean(iz) + alpha(ilay)
+             vp_model(iz, nmod) = alpha(ilay)
              nvsz(iz, ivs) = nvsz(iz, ivs) + 1
              if (beta(ilay) > 0.d0) then
                 vs_mean(iz) = vs_mean(iz) + beta(ilay)
+                vs_model(iz, nmod) = beta(ilay)
              else
                 vs_mean(iz) = vs_min
+                vs_model(iz, nmod) = vs_min
              end if
           end do
           tmpz = tmpz + h(ilay)
@@ -348,7 +365,11 @@ contains
     allocate(vp_mean(nbin_z), vs_mean(nbin_z))
     allocate(nprop(ntype), naccept(ntype))
     allocate(likelihood_hist(niter + nburn))
+    allocate(vp_model(nbin_z, int(nchains * niter / ncorr)))
+    allocate(vs_model(nbin_z, int(nchains * niter / ncorr)))
+    allocate(all_likelihood(int(nchains * niter / ncorr)))
     
+
     nk = 0
     nz = 0
     nsig = 0
@@ -357,6 +378,8 @@ contains
     nvsz = 0
     vp_mean = 0.d0
     vs_mean = 0.d0
+    vs_model(1,:) = -999.9d0
+    
     nmod = 0
     naccept = 0
     nprop = 0
@@ -425,7 +448,7 @@ contains
     n_tot_iter = nburn + niter
     
     do it = 1, n_tot_iter
-       if (rank == 1 .and. mod(it, ncorr) == 0) then
+       if (rank == 0 .and. mod(it, ncorr) == 0) then
           write(*,*)"Iteration #:", it, "/", n_tot_iter
        end if
        ! Within-chain step for all chains

@@ -7,6 +7,7 @@ FFLAGS = -ffast-math -march=native -mtune=native -O3 -fno-range-check
 
 #--------------
 # For debug
+
 #FFLAGS = -pg -Wall -pedantic -std=f2003 -fbounds-check -O0 -Wuninitialized \
             -ffpe-trap=invalid,zero,overflow -fbacktrace \
             -fno-range-check 

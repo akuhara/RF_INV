@@ -77,8 +77,7 @@ module params
   
   ! prior
   integer :: k_min, k_max
-  real(8) :: z_min, z_max
-  !real(8) :: dvs_min, dvs_max, dvp_min, dvp_max
+  real(8) :: z_min, z_max, h_min
 
   integer :: prior_mode
   real(8) :: dvs_prior, dvp_prior
@@ -212,8 +211,12 @@ contains
     write(io_copy, *) k_min, k_max
 
     call get_line(io_param, line)
-    read(line,*) z_min, z_max
+    read(line, *) z_min, z_max
     write(io_copy, *) z_min, z_max
+    
+    call get_line(io_param, line)
+    read(line, *) h_min
+    write(io_copy, *) h_min
 
     call get_line(io_param, line)
     read(line, *) prior_mode
@@ -326,6 +329,7 @@ contains
        write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
        write(*,*)"Min./Max. # of interfaces              : ", k_min, k_max
        write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
+       write(*,*)"Minimum thickness of layer (km)        : ", h_min        
        write(*,*)"Prior mode for velocity perturbation   : ", prior_mode
        write(*,*)"Standard deviation for dVs prior       : ", dvs_prior
        write(*,*)"Standard deviation for dVp prior       : ", dvp_prior

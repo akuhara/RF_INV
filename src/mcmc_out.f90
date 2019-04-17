@@ -37,13 +37,15 @@ contains
     include "mpif.h"
     integer, intent(in) :: nproc, rank
     logical, intent(in) :: verb
-    integer :: nk_sum(k_max), ierr, ik, itrc, it, i, iv, iz
+    integer :: nk_sum(k_max), ierr, ik, itrc, it, i, iv, iz, imod
     integer :: namp_sum(nbin_amp, nsmp, ntrc), nmod_sum
     integer :: nprop_sum(ntype), naccept_sum(ntype)
     integer :: nvsz_sum(nbin_z, nbin_vs), nvpz_sum(nbin_z, nbin_vp)
     integer :: nsig_sum(nbin_sig, ntrc), nz_sum(nbin_z)
     real(8) :: likelihood_hist_av(nburn + niter)
     real(8) :: vp_mean_sum(nbin_z), vs_mean_sum(nbin_z)
+    real(8), allocatable :: vp_model_sum(:,:), vs_model_sum(:,:)
+    real(8), allocatable :: all_likelihood_sum(:)
     character(clen_max) :: out_file
     
     call mpi_reduce(nmod, nmod_sum, 1, MPI_INTEGER4, MPI_SUM, &
@@ -71,6 +73,17 @@ contains
     call mpi_reduce(vs_mean, vs_mean_sum, nbin_z, MPI_REAL8, &
          & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 
+
+    
+    allocate(all_likelihood_sum(int(niter*nchains*nproc/ncorr)))
+    allocate(vp_model_sum(nbin_z, int(niter*nchains*nproc/ncorr)))
+    allocate(vs_model_sum(nbin_z, int(niter*nchains*nproc/ncorr)))
+    
+    
+    call mpi_gather(vs_model, nbin_z*int(niter*nchains/ncorr), &
+         & MPI_REAL8, vs_model_sum, nbin_z*int(niter*nchains/ncorr), &
+         & MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
+
     
 
     if (rank == 0) then
@@ -85,6 +98,28 @@ contains
           write(*,*)
        end if
        
+       ! All models
+       out_file = trim(out_dir) // "/" // 'vs_models'
+       open(141, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do imod = 1, niter*nchains*nproc/ncorr
+          if (vs_model_sum(1, imod) < -900.d0) then
+             cycle
+          end if
+          write(141,*)""
+          do iz = 1, nbin_z
+             write(141,*)(iz - 0.5d0) * dbin_z, vs_model_sum(iz, imod)
+          end do
+          write(141,*)""
+       end do
+       
+       close(141)
+
        ! Transition of Likelihood 
        out_file = trim(out_dir) // "/" // 'likelihood'
        open(io_lkhd, file = out_file, status = "unknown", &
@@ -146,7 +181,7 @@ contains
        end if
        do i = 1, nbin_z
           write(io_z,*) &
-               & (i - 0.5d0) * dbin_z + z_min, dble(nz_sum(i)) / dble(nmod_sum)
+               & (i - 0.5d0) * dbin_z, dble(nz_sum(i)) / dble(nmod_sum)
        end do
        close(io_z)
 
