@@ -41,11 +41,11 @@ all: $(TARGET1) $(TARGET2)
 
 $(TARGET1): $(OBJS1)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
+	$(MF90) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK) 
 
 $(TARGET2): $(OBJS2)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(MF90) $(FFLAGS) $(FFTW) $(LAPACK) $^ -o $@
+	$(MF90) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK) 
 
 src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
               forward.mod pt_mcmc.mod mcmc_out.mod
