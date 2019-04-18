@@ -17,7 +17,7 @@ class InvRslt:
                        'ncool', 't_high', 'iseed', 'ntrc', 'rayp', 'a_gus', \
                        'ipha', 'nfft', 'obs_file', 't_start', 't_end', \
                        'conv_mode', 'sdep', 'vel_file', 'vp_mode', \
-                       'k_min', 'k_max', 'z_min',  'z_max', 'prior_mode', \
+                       'k_min', 'k_max', 'z_min',  'z_max', 'h_min', 'prior_mode', \
                        'dvs_prior', 'dvp_prior', 'sig_min', 'sig_max', \
                        'dev_z', 'dev_dvs', 'dev_dvp', 'dev_sig', 'nbin_z', \
                        'nbin_vs', 'nbin_vp', 'nbin_sig', 'nbin_amp', \
