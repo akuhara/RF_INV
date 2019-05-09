@@ -72,7 +72,8 @@ module params
   character(clen_max) :: vel_file
   
   ! inversion setting
-  integer :: vp_mode, sig_mode
+  integer :: vp_mode
+  integer, allocatable :: sig_mode(:)
   
   
   ! prior
@@ -81,7 +82,7 @@ module params
 
   integer :: prior_mode
   real(8) :: dvs_prior, dvp_prior
-  real(8) :: sig_min, sig_max
+  real(8), allocatable :: sig_min(:), sig_max(:)
   
   ! proposal
   real(8) :: dev_z, dev_dvs, dev_dvp, dev_sig
@@ -230,20 +231,23 @@ contains
     read(line,*) dvp_prior
     write(io_copy, *) dvp_prior
 
-    call get_line(io_param, line)
-    read(line,*) sig_min, sig_max
-    write(io_copy, *) sig_min, sig_max
-    if (sig_max - sig_min > 1.0e-5) then
-       sig_mode = 1
-       if (verb) then
-          write(*,*)"Sigma is solved"
+    do itrc = 1, ntrc
+       call get_line(io_param, line)
+       read(line,*) sig_min(itrc), sig_max(itrc)
+       write(io_copy, *) sig_min(itrc), sig_max(itrc)
+       if (sig_max(itrc) - sig_min(itrc) > 1.0e-5) then
+          sig_mode(itrc) = 1
+          if (verb) then
+             write(*,*)"Sigma is solved for trace", itrc
+          end if
+       else
+          sig_mode(itrc) = 0
+          if (verb) then
+             write(*,*) "Sigma is fixed at ", sig_min(itrc) &
+                  & , " for trace ", itrc
+          end if
        end if
-    else
-       sig_mode = 0
-       if (verb) then
-          write(*,*) "Sigma is fixed at ", sig_min
-       end if
-    end if
+    end do
     
     call get_line(io_param, line)
     read(line,*) dev_z
@@ -333,7 +337,10 @@ contains
        write(*,*)"Prior mode for velocity perturbation   : ", prior_mode
        write(*,*)"Standard deviation for dVs prior       : ", dvs_prior
        write(*,*)"Standard deviation for dVp prior       : ", dvp_prior
-       write(*,*)"Min./Max. of noise sigma prior         : ", sig_min, sig_max
+       do itrc = 1, ntrc
+          write(*,*)"Min./Max. of noise sigma prior         : ", &
+               & sig_min(itrc), sig_max(itrc)
+       end do
        write(*,*)"Standard deviation for depth proposal  : ", dev_z
        write(*,*)"Standard deviation for dVs proposal    : ", dev_dvs
        write(*,*)"Standard deviation for dVp proposal    : ", dev_dvp
@@ -376,6 +383,8 @@ contains
 
     allocate(rayps(ntrc), a_gus(ntrc), ipha(ntrc))
     allocate(obs_files(ntrc), obs(npts_max, ntrc))
+    allocate(sig_min(ntrc), sig_max(ntrc))
+    allocate(sig_mode(ntrc))
     
     return 
   end subroutine allocate_trace_num

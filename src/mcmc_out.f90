@@ -195,11 +195,14 @@ contains
           stop
        end if
        do itrc = 1, ntrc
-          do i = 1, nbin_sig
-             write(io_sig,*) (i - 0.5d0) * dbin_sig + sig_min, &
-                  & dble(nsig_sum(i, itrc)) / dble(nmod_sum), &
-                  & itrc
-          end do
+          if (sig_mode(itrc) == 1) then
+             do i = 1, nbin_sig
+                write(io_sig,*) (i - 0.5d0) * dbin_sig(itrc) &
+                     & + sig_min(itrc), &
+                     & dble(nsig_sum(i, itrc)) / dble(nmod_sum), &
+                     & itrc
+             end do
+          end if
        end do
        close(io_sig)
 

@@ -334,7 +334,7 @@ class InvRslt:
             self.plot_v_z(fig, ax, vtype='vp')
             
         png_file = param["outdir"] + "/" + "plot" +  \
-                   str(trace_id).zfill(2) + ".png"
+                   str(trace_id).zfill(2) + ".ps"
         print(png_file)
         fig.savefig(png_file)
         

@@ -83,7 +83,7 @@ program make_syn
 
   
   if (is_ray_common) then
-     noise_sigma(1) = grnd() * (sig_max - sig_min) + sig_min
+     noise_sigma(1) = grnd() * (sig_max(1) - sig_min(1)) + sig_min(1)
      do it = 1, nfft
         noise(it, 1) = gauss() * noise_sigma(1)
      end do
@@ -100,7 +100,8 @@ program make_syn
      
   else
      do itrc = 1, ntrc
-        noise_sigma(itrc) = grnd() * (sig_max - sig_min) + sig_min
+        noise_sigma(itrc) = grnd() * &
+             &(sig_max(itrc) - sig_min(itrc)) + sig_min(itrc)
         do it = 1, nfft
            noise(it, itrc) = gauss() * noise_sigma(itrc)
         end do

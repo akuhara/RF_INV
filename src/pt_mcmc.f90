@@ -36,10 +36,13 @@ module pt_mcmc
   real(8), allocatable, public :: all_likelihood(:)
   real(8), allocatable, public :: vp_mean(:), vs_mean(:)
   real(8), allocatable, public :: likelihood_hist(:)
-  real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp, dbin_sig
+  real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp
+  real(8), allocatable, public :: dbin_sig(:)
 
   integer, public :: ntype, itype_birth, itype_death
   integer, public :: itype_dvs, itype_dvp, itype_sig, itype_z
+  integer, public :: nsig_trc
+  integer, allocatable, public :: isig_trc(:)
   character(clen_max), allocatable, public :: prop_label(:)
 
   public init_pt_mcmc
@@ -83,17 +86,6 @@ contains
     ! Select proposal type
     itype = int(grnd() * ntype) + 1
     
-    ! Prior
-    !if (iter < int(nburn * 0.25)) then
-    !   dvs_prior = 0.05
-    !else if (iter < int(nburn * 0.5)) then
-    !   dvs_prior = 0.07
-    !else if (iter < int(nburn * 0.75)) then
-    !   dvs_prior = 0.1
-    !else
-    !   dvs_prior = 0.15
-    !end if
-
     ! Make Proposal
     if (itype == itype_birth) then
        ! Birth proposal
@@ -158,10 +150,10 @@ contains
 
     else if (itype == itype_sig) then
        ! Perturb noise sigma
-       itarget = int(grnd() * ntrc) + 1
+       itarget = isig_trc(int(grnd() * nsig_trc) + 1)
        prop_sig(itarget) = prop_sig(itarget) + gauss() * dev_sig
-       if (prop_sig(itarget) < sig_min .or. &
-            & prop_sig(itarget) > sig_max) then
+       if (prop_sig(itarget) < sig_min(itarget) .or. &
+            & prop_sig(itarget) > sig_max(itarget)) then
           null_flag = .true.
        end if
     end if
@@ -219,12 +211,14 @@ contains
        nk(k(ichain)) = nk(k(ichain)) + 1
        
        ! Noise sigma
-       if (sig_mode == 1) then
-          do itrc = 1, ntrc
-             ibin = int((sig(itrc, ichain) - sig_min) / dbin_sig) + 1
+       do itrc = 1, ntrc
+          if (sig_mode(itrc) == 1) then
+             
+             ibin = int((sig(itrc, ichain) - sig_min(itrc)) / &
+                  & dbin_sig(itrc)) + 1
              nsig(ibin, itrc) = nsig(ibin, itrc) + 1
-          end do
-       end if
+          end if
+       end do
 
        ! Interface depth
        do ilay = 1, k(ichain) - 1
@@ -295,7 +289,8 @@ contains
     implicit none 
     logical, intent(in) :: verb
     real(8) :: prop_rft(nfft, ntrc)
-    integer :: ichain, ierr, itype
+    integer :: ichain, ierr, itype, itrc
+    logical :: sig_solved
 
     ! Proposal type
     if (verb) then
@@ -326,11 +321,31 @@ contains
           stop
        end if
     end if
-    if (sig_mode == 1) then
+
+    ! Sigma
+    sig_solved = .false.
+    nsig_trc = 0
+    do itrc = 1, ntrc
+       if (sig_mode(itrc) == 1) then
+          sig_solved = .true.
+          nsig_trc = nsig_trc + 1
+          isig_trc(nsig_trc) = itrc
+       else
+          itype_sig = -1
+       end if
+    end do
+    if (sig_solved) then
        ntype = ntype + 1
        itype_sig = ntype
-    else
+    else 
        itype_sig = -1
+    end if
+
+    if (verb) then
+       write(*,*)"Sigma solved:"
+       do itrc = 1, nsig_trc
+          write(*,*) "  * Trace ", isig_trc(itrc)
+       end do
     end if
 
     ! Make proposal label for output summary 
@@ -368,7 +383,7 @@ contains
     allocate(vp_model(nbin_z, int(nchains * niter / ncorr)))
     allocate(vs_model(nbin_z, int(nchains * niter / ncorr)))
     allocate(all_likelihood(int(nchains * niter / ncorr)))
-    
+    allocate(dbin_sig(ntrc))
 
     nk = 0
     nz = 0
@@ -384,8 +399,10 @@ contains
     naccept = 0
     nprop = 0
     likelihood_hist = 0.d0
-
-    dbin_sig = (sig_max - sig_min) / nbin_sig
+    
+    do itrc = 1, ntrc
+       dbin_sig(itrc) = (sig_max(itrc) - sig_min(itrc)) / nbin_sig
+    end do
     dbin_amp = (amp_max - amp_min) / nbin_amp
     dbin_vp = (vp_max - vp_min) / nbin_vp
     dbin_vs = (vs_max - vs_min) / nbin_vs

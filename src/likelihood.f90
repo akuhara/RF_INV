@@ -114,20 +114,17 @@ contains
     
     allocate(sig(ntrc, nchains))
 
-    if (sig_mode == 1) then
-       do ichain = 1, nchains
-          do itrc = 1, ntrc
-             sig(itrc, ichain) = sig_min + grnd() * (sig_max - sig_min)
-          end do
+    do ichain = 1, nchains
+       do itrc = 1, ntrc
+          if (sig_mode(itrc) == 1) then
+             sig(itrc, ichain) = sig_min(itrc) + &
+                  & grnd() * (sig_max(itrc) - sig_min(itrc))
+          else 
+             sig(itrc, ichain) = sig_min(itrc)
+          end if
        end do
-    else 
-       do ichain = 1, nchains
-          do itrc = 1, ntrc
-             sig(itrc, ichain) = sig_min
-          end do
-       end do
-    end if
-       
+    end do
+    
     
     if (verb) then
        write(*,*)
