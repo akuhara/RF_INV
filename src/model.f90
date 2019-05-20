@@ -60,11 +60,12 @@ contains
     dvs = 0.d0
     z   = 0.d0
     do ichain = 1, nchains
-       k(ichain) = k_min + int(grnd() * (k_max - k_min))
-       !k(ichain) = k_min
+
        is_valid = .false.
 
        do while (.not. is_valid)
+          k(ichain) = k_min + int(grnd() * (k_max - k_min))
+          
           do i = 1, k(ichain)
              z(i, ichain) = z_min + grnd() * (z_max - z_min)
           end do

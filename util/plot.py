@@ -52,15 +52,35 @@ class InvRslt:
                     item[0] = item[0].replace("'", "")
                     item[0] = item[0].replace('"', '')
                     args.append(item[0])
-                    param[param_names[i]] = args
+
+                param[param_names[i]] = args
                         
-            elif (param_names[i] == "t_start" or param_names[i] == "k_min" or \
-                  param_names[i] == "z_min" or param_names[i] == "sig_min" or \
-                  param_names[i] == "amp_min" or param_names[i] == "vp_min" or \
-                  param_names[i] == "vs_min"):
+            elif param_names[i] == "t_start" or \
+                 param_names[i] == "k_min" or \
+                 param_names[i] == "z_min" or \
+                 param_names[i] == "amp_min" or \
+                 param_names[i] == "vp_min" or \
+                 param_names[i] == "vs_min":
                 param[param_names[i]] = item[0]
                 i += 1
                 param[param_names[i]] = item[1]
+                
+            elif param_names[i] == "sig_min":
+                args0 = []
+                args1 = []
+                for j in range(0, int(param["ntrc"])):
+                    #--- chomp & split for later traces ---
+                    if (j > 0): 
+                        line = f.readline()
+                        item = line.split()
+                    #---------------------------------------
+                    
+                    args0.append(item[0])
+                    args1.append(item[1])
+
+                param[param_names[i]] = args0
+                i += 1
+                param[param_names[i]] = args1
                 
             else:
                 param[param_names[i]] = item[0]
@@ -296,7 +316,7 @@ class InvRslt:
         #ax.set_xscale("log")
         #ax.set_yscale("log")
         ax.set_ylabel(ylabel)
-        ax.set_ylim(0, 500)
+        ax.set_ylim(400, )
         ax.axvspan(x1, x2, facecolor="orange")
         
     
@@ -316,14 +336,15 @@ class InvRslt:
         ax = plt.subplot2grid(grid_geom, (0, 0), fig=fig)
         self.plot_num_interface(fig, ax)
         
-        if (float(param["sig_max"]) - float(param["sig_min"]) > 1.0e-5):
+        if (float(param["sig_max"][trace_id-1]) \
+            - float(param["sig_min"][trace_id-1]) > 1.0e-5):
             ax = plt.subplot2grid(grid_geom, (0, 1), fig=fig)
             self.plot_sigma(fig, ax, trace_id)
             
         ax = plt.subplot2grid(grid_geom, (1, 0), fig=fig)
         self.plot_likelihood(fig, ax)
 
-        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=1, fig=fig)
         self.plot_syn_trace(fig, ax, trace_id)
         
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
