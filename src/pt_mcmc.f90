@@ -289,7 +289,7 @@ contains
     implicit none 
     logical, intent(in) :: verb
     real(8) :: prop_rft(nfft, ntrc)
-    integer :: ichain, ierr, itype, itrc
+    integer :: ichain, ierr, itype, itrc, itmp
     logical :: sig_solved
 
     ! Proposal type
@@ -329,14 +329,21 @@ contains
        if (sig_mode(itrc) == 1) then
           sig_solved = .true.
           nsig_trc = nsig_trc + 1
-          isig_trc(nsig_trc) = itrc
        else
           itype_sig = -1
        end if
     end do
+    allocate(isig_trc(nsig_trc))
     if (sig_solved) then
        ntype = ntype + 1
        itype_sig = ntype
+       itmp = 1
+       do itrc = 1, ntrc
+          if (sig_mode(itrc) == 1) then
+             isig_trc(itmp) = itrc
+             itmp = itmp + 1
+          end if
+       end do
     else 
        itype_sig = -1
     end if
