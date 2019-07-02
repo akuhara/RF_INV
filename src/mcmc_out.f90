@@ -41,9 +41,10 @@ contains
     integer :: namp_sum(nbin_amp, nsmp, ntrc), nmod_sum
     integer :: nprop_sum(ntype), naccept_sum(ntype)
     integer :: nvsz_sum(nbin_z, nbin_vs), nvpz_sum(nbin_z, nbin_vp)
+    integer :: nvpvsz_sum(nbin_z, nbin_vpvs)
     integer :: nsig_sum(nbin_sig, ntrc), nz_sum(nbin_z)
     real(8) :: likelihood_hist_av(nburn + niter)
-    real(8) :: vp_mean_sum(nbin_z), vs_mean_sum(nbin_z)
+    real(8) :: vp_mean_sum(nbin_z), vs_mean_sum(nbin_z), vpvs_mean_sum(nbin_z)
     real(8), allocatable :: vp_model_sum(:,:), vs_model_sum(:,:)
     real(8), allocatable :: all_likelihood_sum(:)
     character(clen_max) :: out_file
@@ -61,6 +62,8 @@ contains
     call mpi_reduce(nvpz, nvpz_sum, nbin_z * nbin_vp, &
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call mpi_reduce(nvsz, nvsz_sum, nbin_z * nbin_vs, &
+         & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    call mpi_reduce(nvpvsz, nvpvsz_sum, nbin_z * nbin_vpvs, &
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call mpi_reduce(nz, nz_sum, nbin_z, &
          & MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
@@ -243,6 +246,25 @@ contains
           end do
        end do
        close(io_vpz)
+       
+       ! Vp/Vs profile
+       out_file = trim(out_dir) // "/" // 'vpvs_z.ppd'
+       open(io_vpvsz, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create ", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do iv = 1, nbin_vpvs
+          do iz = 1, nbin_z
+             write(io_vpvsz,'(3F10.5)') &
+                  & (iv - 0.5d0) * dbin_vpvs + vpvs_min, &
+                  & (iz - 0.5d0) * dbin_z, &
+                  & dble(nvpvsz_sum(iz, iv)) / dble(nmod_sum)
+          end do
+       end do
+       close(io_vpvsz)
 
        ! Vs mean
        out_file = trim(out_dir) // "/" // "vs_z.mean"
@@ -274,6 +296,20 @@ contains
        end do
        close(io_vp_mean)
        
+       ! Vp/Vs mean
+       out_file = trim(out_dir) // "/" // "vpvs_z.mean"
+       open(io_vpvs_mean, file = out_file, status = "unknown", &
+            & iostat = ierr)
+       if (ierr /= 0) then
+          write(0,*)"ERROR: cannot create ", trim(out_file)
+          call mpi_finalize(ierr)
+          stop
+       end if
+       do iz = 1, nbin_z
+          write(io_vpvs_mean,'(2F10.5)')  dble(vpvs_mean_sum(iz)) / &
+               & dble(nmod_sum), (iz - 0.5d0) * dbin_z
+       end do
+       close(io_vpvs_mean)
     end if
 
     return 

@@ -17,12 +17,12 @@ class InvRslt:
                        'ncool', 't_high', 'iseed', 'ntrc', 'rayp', 'a_gus', \
                        'ipha', 'nfft', 'obs_file', 't_start', 't_end', \
                        'conv_mode', 'sdep', 'vel_file', 'vp_mode', \
-                       'k_min', 'k_max', 'z_min',  'z_max', 'h_min', 'prior_mode', \
-                       'dvs_prior', 'dvp_prior', 'sig_min', 'sig_max', \
-                       'dev_z', 'dev_dvs', 'dev_dvp', 'dev_sig', 'nbin_z', \
-                       'nbin_vs', 'nbin_vp', 'nbin_sig', 'nbin_amp', \
-                       'amp_min', 'amp_max', 'vp_min', 'vp_max', 'vs_min', \
-                       'vs_max')
+                       'k_min', 'k_max', 'z_min',  'z_max', 'h_min', \
+                       'prior_mode', 'dvs_prior', 'dvp_prior', 'sig_min', \
+                       'sig_max', 'dev_z', 'dev_dvs', 'dev_dvp', 'dev_sig', \
+                       'nbin_z', 'nbin_vs', 'nbin_vp', 'nbin_sig', \
+                       'nbin_amp', 'amp_min', 'amp_max', 'vp_min', 'vp_max', \
+                       'vs_min', 'vs_max')
         
         # Read prameter file
         param = {}
@@ -199,6 +199,7 @@ class InvRslt:
         if vtype == "vs":
             xlabel = "S wave velocity (km/s)"
             rslt_file = param["outdir"] + "/" + "vs_z.ppd"
+            #rslt_file = "../HDA_all/all_vs_z.dat"
             v_min = float(param["vs_min"])
             v_max = float(param["vs_max"])
             nbin_v = int(param["nbin_vs"])
@@ -287,6 +288,7 @@ class InvRslt:
         ylabel3 = "Depth (km)"
         if (vtype == "vs"):
             mean_file = param["outdir"] + "/" + "vs_z.mean"
+            #mean_file = "../HDA_all/all_mean.dat"
             xlabel3 = "S wave velocity (km/s)"
         elif (vtype == "vp"):
             mean_file = param["outdir"] + "/" + "vp_z.mean"
@@ -297,7 +299,7 @@ class InvRslt:
         line, = ax.plot(df[xlabel3], df[ylabel3], color="blue")
         lines.append(line)
         labels.append("Mean model")
-        ax.legend(lines, labels)
+        #ax.legend(lines, labels)
         
             
     #------------------------------------------------------------------    
@@ -316,7 +318,7 @@ class InvRslt:
         #ax.set_xscale("log")
         #ax.set_yscale("log")
         ax.set_ylabel(ylabel)
-        ax.set_ylim(400, )
+        #ax.set_ylim(400, )
         ax.axvspan(x1, x2, facecolor="orange")
         
     
@@ -355,7 +357,7 @@ class InvRslt:
             self.plot_v_z(fig, ax, vtype='vp')
             
         png_file = param["outdir"] + "/" + "plot" +  \
-                   str(trace_id).zfill(2) + ".ps"
+                   str(trace_id).zfill(2) + ".png"
         print(png_file)
         fig.savefig(png_file)
         

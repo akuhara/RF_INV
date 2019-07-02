@@ -31,12 +31,13 @@ module pt_mcmc
   integer :: nmod 
   integer, allocatable, public :: nk(:), nsig(:,:), namp(:,:,:), nz(:)
   integer, allocatable, public :: nprop(:), naccept(:)
-  integer, allocatable, public :: nvpz(:,:), nvsz(:,:)
+  integer, allocatable, public :: nvpz(:,:), nvsz(:,:), nvpvsz(:,:)
   real(8), allocatable, public :: vp_model(:,:), vs_model(:,:)
   real(8), allocatable, public :: all_likelihood(:)
   real(8), allocatable, public :: vp_mean(:), vs_mean(:)
+  real(8), allocatable, public :: vpvs_mean(:)
   real(8), allocatable, public :: likelihood_hist(:)
-  real(8), public :: dbin_vp, dbin_vs, dbin_z, dbin_amp
+  real(8), public :: dbin_vp, dbin_vs, dbin_vpvs, dbin_z, dbin_amp
   real(8), allocatable, public :: dbin_sig(:)
 
   integer, public :: ntype, itype_birth, itype_death
@@ -66,7 +67,7 @@ contains
     real(8) :: prop_sig(ntrc), tmpz
     integer :: prop_k
     integer :: itype, itarget, ilay, ibin, iz1, iz2, itrc, iz
-    integer :: ivp, ivs, it
+    integer :: ivp, ivs, it, ivpvs
     logical :: null_flag, yn, fwd_flag, is_valid
     integer :: nlay
     real(8) :: alpha(nlay_max), beta(nlay_max)
@@ -241,16 +242,21 @@ contains
           end if
           ivp = int((alpha(ilay) - vp_min) / dbin_vp) + 1
           ivs = int((beta(ilay) - vs_min) / dbin_vs) + 1
+          ivpvs = int(((alpha(ilay) / beta(ilay)) - vpvs_min) / dbin_vpvs) + 1
           ivs = max(1, ivs) ! for ocean layer where beta(1) < vs_min
           do iz = iz1, iz2 - 1
              nvpz(iz, ivp) = nvpz(iz, ivp) + 1
              vp_mean(iz) = vp_mean(iz) + alpha(ilay)
              vp_model(iz, nmod) = alpha(ilay)
              nvsz(iz, ivs) = nvsz(iz, ivs) + 1
+             nvpvsz(iz, ivpvs) = nvpvsz(iz, ivpvs) + 1
              if (beta(ilay) > 0.d0) then
+                vpvs_mean(iz) = vpvs_mean(iz) + alpha(ilay) / beta(ilay)
                 vs_mean(iz) = vs_mean(iz) + beta(ilay)
                 vs_model(iz, nmod) = beta(ilay)
+                
              else
+                vpvs_mean(iz) = 0.d0
                 vs_mean(iz) = vs_min
                 vs_model(iz, nmod) = vs_min
              end if
@@ -384,7 +390,8 @@ contains
     allocate(nk(k_max), nz(nbin_z), nsig(nbin_sig, ntrc))
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
-    allocate(vp_mean(nbin_z), vs_mean(nbin_z))
+    allocate(nvpvsz(nbin_z, nbin_vpvs))
+    allocate(vp_mean(nbin_z), vs_mean(nbin_z), vpvs_mean(nbin_vpvs))
     allocate(nprop(ntype), naccept(ntype))
     allocate(likelihood_hist(niter + nburn))
     allocate(vp_model(nbin_z, int(nchains * niter / ncorr)))
@@ -398,8 +405,10 @@ contains
     namp = 0
     nvpz = 0
     nvsz = 0
+    nvpvsz = 0
     vp_mean = 0.d0
     vs_mean = 0.d0
+    vpvs_mean = 0.d0
     vs_model(1,:) = -999.9d0
     
     nmod = 0
@@ -414,6 +423,7 @@ contains
     dbin_vp = (vp_max - vp_min) / nbin_vp
     dbin_vs = (vs_max - vs_min) / nbin_vs
     dbin_z = (z_max - 0.d0) / nbin_z
+    dbin_vpvs = (vpvs_max - vpvs_min) / nbin_vpvs
     
 
 

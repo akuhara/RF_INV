@@ -34,9 +34,12 @@ module params
   integer, parameter :: clen_max = 200
   integer, parameter :: io_param = 10, io_obs = 20, io_ref = 30
   integer, parameter :: io_nk = 40, io_syn = 50, io_vpz = 60
-  integer, parameter :: io_vsz = 70, io_z = 80, io_sig = 90
-  integer, parameter :: io_copy = 100, io_lkhd = 110
-  integer, parameter :: io_vp_mean = 120, io_vs_mean = 130
+  integer, parameter :: io_vsz = 70, io_vpvsz = 80, io_z = 90
+  integer, parameter :: io_sig = 100
+  integer, parameter :: io_copy = 110, io_lkhd = 120
+  integer, parameter :: io_vp_mean = 130, io_vs_mean = 140
+  integer, parameter :: io_vpvs_mean = 150
+  
 
   integer, parameter :: npts_max = 2000, nlay_max = 200
 
@@ -88,8 +91,9 @@ module params
   real(8) :: dev_z, dev_dvs, dev_dvp, dev_sig
 
   ! output
-  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig
+  integer :: nbin_z, nbin_vs, nbin_vp, nbin_amp, nbin_sig, nbin_vpvs
   real(8) :: amp_min, amp_max, vp_min, vp_max, vs_min, vs_max
+  real(8) :: vpvs_min, vpvs_max
 
   !=====================================================================
   
@@ -278,6 +282,10 @@ contains
     write(io_copy, *) nbin_vp
 
     call get_line(io_param, line)
+    read(line, *) nbin_vpvs
+    write(io_copy, *)nbin_vpvs
+
+    call get_line(io_param, line)
     read(line,*) nbin_sig
     write(io_copy, *) nbin_sig
 
@@ -296,6 +304,10 @@ contains
     call get_line(io_param, line)
     read(line,*) vs_min, vs_max
     write(io_copy, *) vs_min, vs_max
+    
+    call get_line(io_param, line)
+    read(line, *) vpvs_min, vpvs_max
+    write(io_copy, *) vpvs_min, vpvs_max
 
     if (verb) then
        write(*,*)"--- Parameters --- "
@@ -348,11 +360,13 @@ contains
        write(*,*)"# of bins for depth                    : ", nbin_z
        write(*,*)"# of bins for Vs                       : ", nbin_vs
        write(*,*)"# of bins for Vp                       : ", nbin_vp
+       write(*,*)"# of bins for Vp/Vs                    : ", nbin_vpvs
        write(*,*)"# of bins for noise sigma              : ", nbin_sig
        write(*,*)"# of bins for amplitudes               : ", nbin_amp
        write(*,*)"Min./Max. amplitudes to be displayed   : ", amp_min, amp_max
        write(*,*)"Min./Max. Vs to be displayed           : ", vs_min, vs_max
        write(*,*)"Min./Max. Vp to be displayed           : ", vp_min, vp_max
+       write(*,*)"Min./Max. Vp/Vs to be displayed        : ", vpvs_min, vpvs_max
     end if
     close(io_param)
     close(io_copy)
