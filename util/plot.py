@@ -20,9 +20,10 @@ class InvRslt:
                        'k_min', 'k_max', 'z_min',  'z_max', 'h_min', \
                        'prior_mode', 'dvs_prior', 'dvp_prior', 'sig_min', \
                        'sig_max', 'dev_z', 'dev_dvs', 'dev_dvp', 'dev_sig', \
-                       'nbin_z', 'nbin_vs', 'nbin_vp', 'nbin_sig', \
-                       'nbin_amp', 'amp_min', 'amp_max', 'vp_min', 'vp_max', \
-                       'vs_min', 'vs_max')
+                       'nbin_z', 'nbin_vs', 'nbin_vp', 'nbin_vpvs', \
+                       'nbin_sig', 'nbin_amp', 'amp_min', 'amp_max', \
+                       'vp_min', 'vp_max', 'vs_min', 'vs_max', \
+                       'vpvs_min', 'vpvs_max')
         
         # Read prameter file
         param = {}
@@ -60,7 +61,8 @@ class InvRslt:
                  param_names[i] == "z_min" or \
                  param_names[i] == "amp_min" or \
                  param_names[i] == "vp_min" or \
-                 param_names[i] == "vs_min":
+                 param_names[i] == "vs_min" or \
+                 param_names[i] == "vpvs_min" :
                 param[param_names[i]] = item[0]
                 i += 1
                 param[param_names[i]] = item[1]
@@ -209,6 +211,12 @@ class InvRslt:
             v_min = float(param["vp_min"])
             v_max = float(param["vp_max"])
             nbin_v = int(param["nbin_vp"])
+        elif vtype == "vpvs":
+            xlabel = "Vp/Vs ratio"
+            rslt_file = param["outdir"] + "/" + "vpvs_z.ppd"
+            v_min = float(param["vpvs_min"])
+            v_max = float(param["vpvs_max"])
+            nbin_v = int(param["nbin_vpvs"])
             
         ylabel = "Depth (km)"
         zlabel = "Posterior probability"
@@ -231,7 +239,7 @@ class InvRslt:
         ax.set_ylim([z_max + del_z, 0])
 
         if ((vtype == "vs" and int(param["vp_mode"]) == 0) or \
-            vtype == "vp"):
+            vtype == "vpvs"):
             cbar = fig.colorbar(mappable, ax=ax)
             cbar.ax.set_ylabel(zlabel)
 
@@ -251,27 +259,29 @@ class InvRslt:
             line, = ax.plot(df[zlabel2], df[xlabel2], color="black")
         elif (vtype == "vp"):
             line, = ax.plot(df[ylabel2], df[xlabel2], color="black")
-        lines.append(line)
-        labels.append("Reference model")
+
+        if (vtype != "vpvs"):            
+            lines.append(line)
+            labels.append("Reference model")
             
         # plot 1-sigma bound
 
         # get 1-sigma
-        if (vtype == "vs"):
-            sigma = float(param["dvs_prior"])
-            v_min = float(param["vs_min"])
-            v_max = float(param["vs_max"])
-        elif (vtype == "vp"):
-            sigma = float(param["dvp_prior"])
-            v_min = float(param["vp_min"])
-            v_max = float(param["vp_max"])
-        
-        # make lower and upper bound for below seafloor depth
-        z_min = float(param["z_min"])
-        df_up = df + np.array([0, sigma, sigma])
-        df_low = df - np.array([0, sigma, sigma])
-        df_up = df_up[df_up[xlabel2] >= z_min]
-        df_low = df_low[df_low[xlabel2] >= z_min]
+        #if (vtype == "vs"):
+        #    sigma = float(param["dvs_prior"])
+        #    v_min = float(param["vs_min"])
+        #    v_max = float(param["vs_max"])
+        #elif (vtype == "vp"):
+        #    sigma = float(param["dvp_prior"])
+        #    v_min = float(param["vp_min"])
+        #    v_max = float(param["vp_max"])
+        #
+        ## make lower and upper bound for below seafloor depth
+        #z_min = float(param["z_min"])
+        #df_up = df + np.array([0, sigma, sigma])
+        #df_low = df - np.array([0, sigma, sigma])
+        #df_up = df_up[df_up[xlabel2] >= z_min]
+        #df_low = df_low[df_low[xlabel2] >= z_min]
         
         #if (vtype == "vs"):
         #    ax.plot(df_up[zlabel2], df_up[xlabel2], color="black", \
@@ -293,7 +303,9 @@ class InvRslt:
         elif (vtype == "vp"):
             mean_file = param["outdir"] + "/" + "vp_z.mean"
             xlabel3 = "P wave velocity (km/s)"
-        
+        elif (vtype == "vpvs"):
+            mean_file = param["outdir"] + "/" + "vpvs_z.mean"
+            xlabel3 = "Vp/Vs ratio"
         df = pd.read_csv(mean_file, delim_whitespace=True, \
                          header=None, names=(xlabel3, ylabel3))
         line, = ax.plot(df[xlabel3], df[ylabel3], color="blue")
@@ -325,7 +337,7 @@ class InvRslt:
     #------------------------------------------------------------------    
     def make_figure(self, trace_id):
         
-        grid_geom = (5, 2)
+        grid_geom = (5, 3)
 
         param = self.param
         sns.set()
@@ -335,7 +347,7 @@ class InvRslt:
         # Adjust intervals between suplots
         fig.subplots_adjust(wspace=0.6, hspace=0.6)
 
-        ax = plt.subplot2grid(grid_geom, (0, 0), fig=fig)
+        ax = plt.subplot2grid(grid_geom, (0, 0), colspan=2, fig=fig)
         self.plot_num_interface(fig, ax)
         
         if (float(param["sig_max"][trace_id-1]) \
@@ -343,10 +355,10 @@ class InvRslt:
             ax = plt.subplot2grid(grid_geom, (0, 1), fig=fig)
             self.plot_sigma(fig, ax, trace_id)
             
-        ax = plt.subplot2grid(grid_geom, (1, 0), fig=fig)
+        ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
         self.plot_likelihood(fig, ax)
 
-        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=1, fig=fig)
+        ax = plt.subplot2grid(grid_geom, (2, 0), colspan=2, fig=fig)
         self.plot_syn_trace(fig, ax, trace_id)
         
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
@@ -355,6 +367,8 @@ class InvRslt:
         if (int(param["vp_mode"]) == 1):
             ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
             self.plot_v_z(fig, ax, vtype='vp')
+            ax = plt.subplot2grid(grid_geom, (3, 2), rowspan=2, fig=fig)
+            self.plot_v_z(fig, ax, vtype='vpvs')
             
         png_file = param["outdir"] + "/" + "plot" +  \
                    str(trace_id).zfill(2) + ".png"

@@ -242,15 +242,11 @@ contains
           end if
           ivp = int((alpha(ilay) - vp_min) / dbin_vp) + 1
           ivs = int((beta(ilay) - vs_min) / dbin_vs) + 1
-          if (ivpvs > 0 .and. ivpvs <= nbin_vpvs) then
-             ivpvs = int(((alpha(ilay) / beta(ilay)) - vpvs_min) / dbin_vpvs) &
-                  & + 1
-          else if (ivpvs <= 0) then
-             ivpvs = 1
-          else 
-             ivpvs = nbin_vpvs
-          end if
           ivs = max(1, ivs) ! for ocean layer where beta(1) < vs_min
+          ivpvs = int(((alpha(ilay) / beta(ilay)) - vpvs_min) / dbin_vpvs) + 1
+          ivpvs = max(1, ivpvs) 
+          ivpvs = min(ivpvs, nbin_vpvs)
+
           do iz = iz1, iz2 - 1
              nvpz(iz, ivp) = nvpz(iz, ivp) + 1
              vp_mean(iz) = vp_mean(iz) + alpha(ilay)
