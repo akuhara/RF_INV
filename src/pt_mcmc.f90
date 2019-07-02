@@ -263,7 +263,7 @@ contains
                 vs_model(iz, nmod) = beta(ilay)
                 
              else
-                vpvs_mean(iz) = 0.d0
+                vpvs_mean(iz) = vpvs_min
                 vs_mean(iz) = vs_min
                 vs_model(iz, nmod) = vs_min
              end if
@@ -398,7 +398,7 @@ contains
     allocate(namp(nbin_amp, nsmp, ntrc))
     allocate(nvpz(nbin_z, nbin_vp), nvsz(nbin_z, nbin_vs))
     allocate(nvpvsz(nbin_z, nbin_vpvs))
-    allocate(vp_mean(nbin_z), vs_mean(nbin_z), vpvs_mean(nbin_vpvs))
+    allocate(vp_mean(nbin_z), vs_mean(nbin_z), vpvs_mean(nbin_z))
     allocate(nprop(ntype), naccept(ntype))
     allocate(likelihood_hist(niter + nburn))
     allocate(vp_model(nbin_z, int(nchains * niter / ncorr)))
