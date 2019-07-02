@@ -75,6 +75,8 @@ contains
          & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call mpi_reduce(vs_mean, vs_mean_sum, nbin_z, MPI_REAL8, &
          & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    call mpi_reduce(vpvs_mean, vpvs_mean_sum, nbin_z, MPI_REAL8, &
+         & MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 
 
     
