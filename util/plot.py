@@ -306,6 +306,7 @@ class InvRslt:
         elif (vtype == "vpvs"):
             mean_file = param["outdir"] + "/" + "vpvs_z.mean"
             xlabel3 = "Vp/Vs ratio"
+        
         df = pd.read_csv(mean_file, delim_whitespace=True, \
                          header=None, names=(xlabel3, ylabel3))
         line, = ax.plot(df[xlabel3], df[ylabel3], color="blue")
@@ -313,6 +314,8 @@ class InvRslt:
         labels.append("Mean model")
         #ax.legend(lines, labels)
         
+        if vtype == "vpvs":
+            ax.set_xlim([1.4, 3.8])
             
     #------------------------------------------------------------------    
 
