@@ -217,7 +217,9 @@ contains
        alpha(i) = vp_ref(iz)
     end if
     if (alpha(i) < vp_min .or. alpha(i) > vp_max .or. &
-         & beta(i) < vs_min .or. beta(i) > vs_max) then
+         & beta(i) < vs_min .or. beta(i) > vs_max .or. &
+         & alpha(i) / beta(i) < vpvs_min .or. &
+         & alpha(i) / beta(i) > vpvs_max) then
        is_valid = .false.
     end if
     rho(i) = vp_to_rho(alpha(i))
@@ -244,7 +246,9 @@ contains
           alpha(i) = vp_ref(iz)
        end if
        if (alpha(i) < vp_min .or. alpha(i) > vp_max .or. &
-            & beta(i) < vs_min .or. beta(i) > vs_max) then
+         & beta(i) < vs_min .or. beta(i) > vs_max .or. &
+         & alpha(i) / beta(i) < vpvs_min .or. &
+         & alpha(i) / beta(i) > vpvs_max) then
           is_valid = .false.
        end if
        rho(i) = vp_to_rho(alpha(i))
@@ -270,7 +274,9 @@ contains
        alpha(i) = vp_ref(iz)
     end if
     if (alpha(i) < vp_min .or. alpha(i) > vp_max .or. &
-         & beta(i) < vs_min .or. beta(i) > vs_max) then
+         & beta(i) < vs_min .or. beta(i) > vs_max .or. &
+         & alpha(i) / beta(i) < vpvs_min .or. &
+         & alpha(i) / beta(i) > vpvs_max) then
        is_valid = .false.
     end if
     rho(i) = vp_to_rho(alpha(i))
