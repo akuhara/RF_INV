@@ -226,11 +226,10 @@ class InvRslt:
         nbin_z = int(param["nbin_z"])
         del_z = (z_max - z_min) / nbin_z
         
-        
         df = pd.read_csv(rslt_file, delim_whitespace=True, \
                          header=None, names=(xlabel, ylabel, zlabel))
-        y, x = np.mgrid[slice(z_min, z_max + del_z, del_z), \
-                        slice(v_min, v_max + del_v, del_v)]
+        y, x = np.mgrid[slice(z_min, z_min + nbin_z * del_z, del_z), \
+                        slice(v_min, v_min + nbin_v * del_v, del_v)]
         data = df.pivot(ylabel, xlabel, zlabel)
         mappable = ax.pcolormesh(x, y, data, cmap='hot_r', \
                                  vmin=0.0, vmax=0.2)
@@ -355,7 +354,7 @@ class InvRslt:
         
         if (float(param["sig_max"][trace_id-1]) \
             - float(param["sig_min"][trace_id-1]) > 1.0e-5):
-            ax = plt.subplot2grid(grid_geom, (0, 1), fig=fig)
+            ax = plt.subplot2grid(grid_geom, (0, 2), fig=fig)
             self.plot_sigma(fig, ax, trace_id)
             
         ax = plt.subplot2grid(grid_geom, (1, 0), colspan=2, fig=fig)
@@ -374,7 +373,7 @@ class InvRslt:
             self.plot_v_z(fig, ax, vtype='vpvs')
             
         png_file = param["outdir"] + "/" + "plot" +  \
-                   str(trace_id).zfill(2) + ".png"
+                   str(trace_id).zfill(2) + ".ps"
         print(png_file)
         fig.savefig(png_file)
         
