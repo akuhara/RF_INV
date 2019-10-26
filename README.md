@@ -6,8 +6,6 @@ Receiver function inversion by reversible-jump Markov-chain Monte Carlo
 
 Any bug report and suggestions are welcome!
 
-![plot01](https://user-images.githubusercontent.com/31914302/67616404-2debb580-f813-11e9-9e46-83b4c8590213.png)
-
 # Features
 
 There are many softwares and literatures for trans-dimensional inversion of receiver functions. This inversion code has following originalities.
