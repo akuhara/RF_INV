@@ -2,7 +2,7 @@
 
 Transdimensional inversion of receiver function waveforms by reversible-jump Markov-chain Monte Carlo
 
-(c) 2018 Takeshi Akuhara (Email: akuhara @ eri.u-tokyo.ac.jp)
+(c) 2018-2019 Takeshi Akuhara (Email: akuhara @ eri.u-tokyo.ac.jp)
 
 Any bug report and suggestions are welcome!
 
