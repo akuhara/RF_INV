@@ -1,15 +1,13 @@
 # RF_INV
 
-Receiver function inversion by reversible-jump Markov-chain Monte Carlo
+Transdimensional inversion of receiver function waveforms by reversible-jump Markov-chain Monte Carlo
 
 (c) 2018 Takeshi Akuhara (Email: akuhara @ eri.u-tokyo.ac.jp)
 
 Any bug report and suggestions are welcome!
 
 # Features
-
-There are many softwares and literatures for trans-dimensional inversion of receiver functions. This inversion code has following originalities.
-
+ 
 * Applicable to OBS data
     * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
 * Multiple input traces
