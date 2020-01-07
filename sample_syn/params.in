@@ -76,7 +76,7 @@
 #           Format: depth(km)  Vp(km/s)  Vs(km/s)
 #           Note:  Need evenly spaced for depth
 #           Note2: quotation mark is necessary
-"model/sample.mod"
+"model/sample.velmod"
 #
 #---------------------------------------------------------
 # Inversion mode
