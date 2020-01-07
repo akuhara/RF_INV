@@ -11,7 +11,7 @@ This direcotry contains synthetic dataset for testing RF_INV. Note that the data
 ## Output example
 ![Plot](https://github.com/akuhara/RF_INV/blob/master/img/plot_sample_syn.png)
 
-## Implication from this experiments
+## Implication from this experiment
 We see dual peaks in the posterior probability distribution of the number of layer interfaces (the topmost panel in the figure). The second peak at k = 9 is due to overfit to noise. This non-uniquenss of the solutions is always problematic for receiver function inversion! One may mitigate this by employing more tight prior constraints.     
 
 
