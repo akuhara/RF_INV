@@ -55,13 +55,13 @@ program make_syn
   call read_ref_model(verb)
   
   call init_model(verb)
-
+  
   call read_obs(verb)
 
   call init_fftw()
 
   call init_forward(verb)
-
+  
   call init_likelihood(verb)
   
     

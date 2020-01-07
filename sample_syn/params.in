@@ -1,0 +1,146 @@
+# Example of a parameter file for RF_INV (params.in)
+#---------------------------------------------------------
+# Output directory
+#---------------------------------------------------------
+# OUT_DIR: output directory 
+#          Note: quotation mark is necessary
+'./rslt'
+#
+#---------------------------------------------------------
+# Iteration
+#---------------------------------------------------------
+# N_BURN: Iteration number during a burn-in period
+3000
+# N_ITER: Iteration number after the burn-in period
+8000
+# N_CORR: Interval of iterations to save sampled model
+#         Note: This is necessary to avoid artificial correlation  
+#               between sample
+10
+#
+#---------------------------------------------------------
+# Parallel tempering
+#---------------------------------------------------------
+# N_CHAINS: Number of chains per processor
+5
+# N_COOL: Number of non-tempered chains per processor
+#         (1 <= N_COOL <= N_CHAINS)
+1
+# T_HIGH: The highest temperature (>= 1.0)
+15.0
+#
+#---------------------------------------------------------
+# Random number
+#---------------------------------------------------------
+# I_SEED: seed number for random number sequence
+12345678
+#
+#---------------------------------------------------------
+# Input Data
+#---------------------------------------------------------
+# N_TRC: Number of input waveforms
+2
+# RAYP(1:N_TRC): Ray parameter for each trace (s/km)  
+#                Note: You can save computation time when RAYP 
+#                      are common for all traces
+0.06
+0.08
+# A_GAUSS(1:N_TRC): Gaussian low-pass filter parameter for each trace
+#                   (i.e., a in G(omega) = exp(-(omega^2/(4a^2))) 
+4.0
+4.0
+# I_PHA(1:NTRC): Incident phase type for each trace (P: 1, S: -1)
+1
+1
+# N_FFT: Sample number used in FFT
+256
+# OBS_FILES(1:N_TRC): Input waveform files (SAC format)
+#                     Note: A header 'delta' is required to 
+#                           be common for all input waveforms.
+#                     Note2: quotation mark is necessary 
+'data/sample_1.trc'
+'data/sample_2.trc'
+# T_START T_END: Start and end of time window to be analyzed
+#                Note: Direct P is assumed to arrive at t=0  
+0.0 5.0
+# DECONV_MODE: Forward computation mode (0: w/o deconvolution, 1: w/ deconvolution)
+0
+#---------------------------------------------------------
+# Velocity model
+#---------------------------------------------------------
+# SEA_DEP: Water depth (km)
+#          Note: Seismic station is assumed to be placed on 
+#                the seafloor when SEA_DEP > 0  
+0.0
+# VEL_FILE: Input file for reference velocity model
+#           Format: depth(km)  Vp(km/s)  Vs(km/s)
+#           Note:  Need evenly spaced for depth
+#           Note2: quotation mark is necessary
+"model/sample.mod"
+#
+#---------------------------------------------------------
+# Inversion mode
+#---------------------------------------------------------
+# VP_MODE: (0: Fixed at reference model, 1: Solved)
+0
+#
+#---------------------------------------------------------
+# Prior probability 
+#---------------------------------------------------------
+# K_MIN K_MAX: Min. and Max. # of interfaces [min., max.)
+1 10
+# Z_MIN Z_MAX: Min./Max. of interface depth (km; below the sea level)
+#              Note: You may want to set Z_MIN = SEA_DEP
+0.0 20.0
+# H_MIN: Minimum thickness of layer to be allowed (km)
+0.05
+# PRIOR_TYPE: Type of the prior probability distribution for 
+#             velocity perturbations (1: Laplacian, 2: Gaussian)
+2 
+# DEV_DVS_PRIOR: Standard deviation for dVs prior (km/s)
+2.0
+# DEV_DVP_PRIOR: Standard deviation for dVp Prior (km/s)
+0.2 
+# SIG_MIN(1:N_TRC) SIG_MAX(1:N_TRC): Min./Max. of noise sigma
+#                  Note: Set SIG_MIN equal to SIG_MAX if you want to fix the noise level
+0.01 0.01
+0.01 0.01
+#
+#---------------------------------------------------------
+# Proposal
+#---------------------------------------------------------
+# STEP_SIZE_Z: standard deviation for depth proposal
+0.02
+# STEP_SIZE_DVS: standard deviation for dVs proposal
+0.02
+# STEP_SIZE_DVP: standard deviation for dVp proposal
+0.02
+# STEP_SIZE_SIG: standard deviation for noise sigma proposal 
+0.002
+#
+#---------------------------------------------------------
+# Figure
+#---------------------------------------------------------
+# N_BIN_Z: Number of bins for depth
+100
+# N_BIN_VS: Number of bins for Vs
+50
+# N_BIN_VP: Number of bins for Vp
+50
+# N_BIN_VPVS: Number of bins for Vp/Vs
+100
+# N_BIN_SIG: Number of bins for noise sigma
+50
+# N_BIN_AMP: Number of bins for amplitudes
+100
+# AMP_MIN AMP_MAX: Min./Max. amplitudes to be displayed
+-0.8 0.8
+#----------------------------------------
+# Additional criteria
+#----------------------------------------
+# VP_MIN VP_MAX: Min./Max. Vp 
+0.1 8.6
+# VS_MIN VS_MAX: Min./Max. Vs
+0.001 5.0
+# VPVS_MIN VPVS_MAX: Min. / Max. Vp/Vs
+0.0 5.0

@@ -255,9 +255,16 @@ class InvRslt:
         
         # reference velocity 
         if (vtype == "vs"):
-            line, = ax.plot(df[zlabel2], df[xlabel2], color="black")
+            ref_data = df[zlabel2]
+            #line, = ax.plot(df[zlabel2], df[xlabel2], color="black")
         elif (vtype == "vp"):
-            line, = ax.plot(df[ylabel2], df[xlabel2], color="black")
+            ref_data = df[ylabel2]
+            #line, = ax.plot(df[ylabel2], df[xlabel2], color="black")
+        elif (vtype == "vpvs"):
+            ref_data =df[ylabel2] / df[zlabel2]
+            #line, = ax.plot(df[ylabel2]/ df[zlabel2], df[xlabel2], color="black")
+        line, = ax.plot(ref_data, df[xlabel2], color="black", \
+                        linestyle="dashed")
 
         if (vtype != "vpvs"):            
             lines.append(line)
@@ -311,10 +318,10 @@ class InvRslt:
         line, = ax.plot(df[xlabel3], df[ylabel3], color="blue")
         lines.append(line)
         labels.append("Mean model")
-        ax.legend(lines, labels)
+        #ax.legend(lines, labels)
         
-        #if vtype == "vpvs":
-        #    ax.set_xlim([1.5, 5.0])
+        if vtype == "vpvs":
+            ax.set_xlim([1.5, 5.0])
             
     #------------------------------------------------------------------    
 
@@ -373,7 +380,7 @@ class InvRslt:
             self.plot_v_z(fig, ax, vtype='vpvs')
             
         png_file = param["outdir"] + "/" + "plot" +  \
-                   str(trace_id).zfill(2) + ".png"
+                   str(trace_id).zfill(2) + ".ps"
         print(png_file)
         fig.savefig(png_file)
         
