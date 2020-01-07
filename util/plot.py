@@ -318,10 +318,10 @@ class InvRslt:
         line, = ax.plot(df[xlabel3], df[ylabel3], color="blue")
         lines.append(line)
         labels.append("Mean model")
-        #ax.legend(lines, labels)
+        ax.legend(lines, labels, loc="lower left")
         
-        if vtype == "vpvs":
-            ax.set_xlim([1.5, 5.0])
+        #if vtype == "vpvs":
+        #    ax.set_xlim([1.5, 5.0])
             
     #------------------------------------------------------------------    
 
@@ -380,7 +380,7 @@ class InvRslt:
             self.plot_v_z(fig, ax, vtype='vpvs')
             
         png_file = param["outdir"] + "/" + "plot" +  \
-                   str(trace_id).zfill(2) + ".ps"
+                   str(trace_id).zfill(2) + ".png"
         print(png_file)
         fig.savefig(png_file)
         
