@@ -157,8 +157,13 @@ contains
              tp = 0.d0
           else
              rff(1:nh) = freq_r(1:nh)
-             call direct_P_arrival(nlay, h(1:nlay), alpha(1:nlay), &
-                  & rayps(itrc), tp) 
+             if (beta(1) >= 0.d0) then
+                call direct_P_arrival(nlay, h(1:nlay), alpha(1:nlay), &
+                     & rayps(itrc), tp) 
+             else
+                call direct_P_arrival(nlay-1, h(2:nlay), alpha(2:nlay), &
+                     & rayps(itrc), tp) 
+             end if
           end if
        end if
        
