@@ -200,10 +200,10 @@ contains
     
     
     call get_line(io_param, line)
-    read(line,*,iostat=ierr) sdep
     bdep = 0.d0
+    read(line,*,iostat=ierr) sdep, bdep
     if (ierr /=0) then
-       read(line,*,iostat=ierr2)sdep, bdep
+       read(line,*,iostat=ierr2)sdep
        if (ierr2 /= 0) then
           write(0,*)"ERROR: while reading SEA_DEP" // &
                & " (BOREHOLE_DEP)"
@@ -211,8 +211,12 @@ contains
           stop
        end if
     end if
-       
-    write(io_copy, *) sdep
+    if (bdep < 0.d0) then
+       write(0,*)"ERROR: BOREHOLE_DEP must be positive"
+       call mpi_finalize(ierr)
+       stop
+    end if
+    write(io_copy, *) sdep, bdep
 
     call get_line(io_param, line)
     read(line,*) vel_file

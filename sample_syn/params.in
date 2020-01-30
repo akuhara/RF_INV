@@ -69,7 +69,7 @@
 #---------------------------------------------------------
 # Velocity model
 #---------------------------------------------------------
-SEA_DEP (BOREHOLE_DEP): Water depth (km)
+#SEA_DEP (BOREHOLE_DEP): Water depth (km)
 #                         (Borehole depth (km))
 #           Note: Seismic station is assumed to be placed on 
 #                  the seafloor when SEA_DEP > 0.
@@ -77,7 +77,7 @@ SEA_DEP (BOREHOLE_DEP): Water depth (km)
 #                  the station depth relative to the ground 
 #                  surface or seafloor 
 #                  (must be positive value)   
-0.0 0.0
+2.0 
 # VEL_FILE: Input file for reference velocity model
 #           Format: depth(km)  Vp(km/s)  Vs(km/s)
 #           Note:  Need evenly spaced for depth
