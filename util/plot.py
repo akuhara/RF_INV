@@ -373,11 +373,11 @@ class InvRslt:
         ax = plt.subplot2grid(grid_geom, (3, 0), rowspan=2, fig=fig)
         self.plot_v_z(fig, ax, vtype='vs')
         
-        if (int(param["vp_mode"]) == 1):
-            ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
-            self.plot_v_z(fig, ax, vtype='vp')
-            ax = plt.subplot2grid(grid_geom, (3, 2), rowspan=2, fig=fig)
-            self.plot_v_z(fig, ax, vtype='vpvs')
+        #if (int(param["vp_mode"]) == 1):
+        ax = plt.subplot2grid(grid_geom, (3, 1), rowspan=2, fig=fig)
+        self.plot_v_z(fig, ax, vtype='vp')
+        ax = plt.subplot2grid(grid_geom, (3, 2), rowspan=2, fig=fig)
+        self.plot_v_z(fig, ax, vtype='vpvs')
             
         png_file = param["outdir"] + "/" + "plot" +  \
                    str(trace_id).zfill(2) + ".png"

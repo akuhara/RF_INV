@@ -64,7 +64,7 @@ module params
   real(8), allocatable :: rayps(:)
   real(8), allocatable :: obs(:,:)
   real(8) :: delta, t_start, t_end
-  real(8) :: sdep
+  real(8) :: sdep, bdep
 
   ! Receiver function
   integer :: nfft, deconv_mode
@@ -102,7 +102,7 @@ contains
     logical, intent(in) :: verb
     character(*), intent(in) :: param_file
     character(clen_max) :: line, out_file
-    integer :: ierr, itrc
+    integer :: ierr, itrc, ierr2
     
     open(io_param, file = param_file, status = "old", iostat = ierr)
     if (ierr /= 0) then
@@ -200,7 +200,18 @@ contains
     
     
     call get_line(io_param, line)
-    read(line,*) sdep
+    read(line,*,iostat=ierr) sdep
+    bdep = 0.d0
+    if (ierr /=0) then
+       read(line,*,iostat=ierr2)sdep, bdep
+       if (ierr2 /= 0) then
+          write(0,*)"ERROR: while reading SEA_DEP" // &
+               & " (BORE_HOLE_DEP)"
+          call mpi_finalize(ierr)
+          stop
+       end if
+    end if
+       
     write(io_copy, *) sdep
 
     call get_line(io_param, line)
@@ -311,62 +322,56 @@ contains
 
     if (verb) then
        write(*,*)"--- Parameters --- "
-       write(*,*)"Output directory                       : ", trim(out_dir)
-       write(*,*)"# of iteration in burn-in              : ", nburn
-       write(*,*)"# of iteration after burn-in           : ", niter
-       write(*,*)"# of iteration per sample              : ", ncorr
-       write(*,*)"# of chains per processor              : ", nchains
-       write(*,*)"# of non-tempered chains per processor : ", ncool
-       write(*,*)"Highest temperature                    : ", t_high
-       write(*,*)"Random seed number                     : ", iseed
-       write(*,*)"# of observed RFs                      : ", ntrc
+       write(*,*)"OUT_DIR: ", trim(out_dir)
+       write(*,*)"N_BURN: ", nburn
+       write(*,*)"N_ITER: ", niter
+       write(*,*)"N_CORR: ", ncorr
+       write(*,*)"N_CHAINS: ", nchains
+       write(*,*)"N_COOL: ", ncool
+       write(*,*)"T_HIGH: ", t_high
+       write(*,*)"I_SEED: ", iseed
+       write(*,*)"N_TRC: ", ntrc
        do itrc = 1, ntrc
-          write(*,*)"Ray parameter                          : ", &
-               & rayps(itrc), "s/km"
+          write(*,*)"RAYP: ", rayps(itrc), "s/km"
        end do
        do itrc = 1, ntrc
-          write(*,*)"Gaussian parameter                     : ", &
-               & a_gus(itrc)
+          write(*,*)"A_GAUSS: ", a_gus(itrc)
        end do
        do itrc = 1, ntrc
-          write(*,*)"Incident phase type                    : ", &
-               & ipha(itrc)
+          write(*,*)"I_PHA: ", ipha(itrc)
        end do
-       write(*,*)"Sample number used in FFT              : ", nfft
+       write(*,*)"N_FFT: ", nfft
        do itrc = 1, ntrc
-          write(*,*)"Observed RF file                       : ", &
-               & trim(obs_files(itrc))
+          write(*,*)"OBS_FILES: ", trim(obs_files(itrc))
        end do
-       write(*,*)"Start/End time                         : ", t_start, &
-            & t_end
-       write(*,*)"Forward computation mode               : ", deconv_mode
-       write(*,*)"Station depth                          : ", sdep
-       write(*,*)"Reference velocity file                : ", trim(vel_file)
-       write(*,*)"Vp mode (0: Fixed, 1: Solved)          : ", vp_mode
-       write(*,*)"Min./Max. # of interfaces              : ", k_min, k_max
-       write(*,*)"Min./Max. of interface depth           : ", z_min, z_max
-       write(*,*)"Minimum thickness of layer (km)        : ", h_min        
-       write(*,*)"Prior mode for velocity perturbation   : ", prior_mode
-       write(*,*)"Standard deviation for dVs prior       : ", dvs_prior
-       write(*,*)"Standard deviation for dVp prior       : ", dvp_prior
+       write(*,*)"T_START, T_END: ", t_start, t_end
+       write(*,*)"DEONV_MODE: ", deconv_mode
+       write(*,*)"SEA_DEP: ", sdep
+       write(*,*)"VEL_FILE: ", trim(vel_file)
+       write(*,*)"VP_MODE: ", vp_mode
+       write(*,*)"K_MIN K_MAX: ", k_min, k_max
+       write(*,*)"Z_MIN Z_MAX: ", z_min, z_max
+       write(*,*)"H_MIN: ", h_min        
+       write(*,*)"PRIOR_TYPE: ", prior_mode
+       write(*,*)"DEV_DVS_PRIOR: ", dvs_prior
+       write(*,*)"DEV_DVP_PRIOR: ", dvp_prior
        do itrc = 1, ntrc
-          write(*,*)"Min./Max. of noise sigma prior         : ", &
-               & sig_min(itrc), sig_max(itrc)
+          write(*,*)"SIG_MIN SIG_MAX: ", sig_min(itrc), sig_max(itrc)
        end do
-       write(*,*)"Standard deviation for depth proposal  : ", dev_z
-       write(*,*)"Standard deviation for dVs proposal    : ", dev_dvs
-       write(*,*)"Standard deviation for dVp proposal    : ", dev_dvp
-       write(*,*)"Standard deviation for sigma proposal  : ", dev_sig
-       write(*,*)"# of bins for depth                    : ", nbin_z
-       write(*,*)"# of bins for Vs                       : ", nbin_vs
-       write(*,*)"# of bins for Vp                       : ", nbin_vp
-       write(*,*)"# of bins for Vp/Vs                    : ", nbin_vpvs
-       write(*,*)"# of bins for noise sigma              : ", nbin_sig
-       write(*,*)"# of bins for amplitudes               : ", nbin_amp
-       write(*,*)"Min./Max. amplitudes to be displayed   : ", amp_min, amp_max
-       write(*,*)"Min./Max. Vs to be displayed           : ", vs_min, vs_max
-       write(*,*)"Min./Max. Vp to be displayed           : ", vp_min, vp_max
-       write(*,*)"Min./Max. Vp/Vs to be displayed        : ", vpvs_min, vpvs_max
+       write(*,*)"STEP_SIZE_Z: ", dev_z
+       write(*,*)"STEP_SIZE_DVS: ", dev_dvs
+       write(*,*)"STEP_SIZE_DVP: ", dev_dvp
+       write(*,*)"STEP_SIZE_SIG: ", dev_sig
+       write(*,*)"N_BIN_Z: ", nbin_z
+       write(*,*)"N_BIN_VS: ", nbin_vs
+       write(*,*)"N_BIN_VP: ", nbin_vp
+       write(*,*)"N_VIN_VPVS: ", nbin_vpvs
+       write(*,*)"N_BIN_SIG: ", nbin_sig
+       write(*,*)"N_BIN_AMP: ", nbin_amp
+       write(*,*)"AMP_MIN AMP_MAX: ", amp_min, amp_max
+       write(*,*)"VP_MIN VP_MAX: ", vp_min, vp_max
+       write(*,*)"VS_MIN VS_MAX: ", vs_min, vs_max
+       write(*,*)"VPVS_MIN VPVS_MAX: ", vpvs_min, vpvs_max
     end if
     close(io_param)
     close(io_copy)

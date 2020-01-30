@@ -156,12 +156,12 @@ contains
              call water_level_decon(freq_v, freq_r, rff, nh, 0.001d0)
              tp = 0.d0
           else
-             rff(1:nh) = freq_r(1:nh)
-             if (beta(1) >= 0.d0) then
-                call direct_P_arrival(nlay, h(1:nlay), alpha(1:nlay), &
+             rff(1:nh) = freq_v(1:nh)
+             if (ipha(itrc) == 1) then
+                call direct_arrival(nlay, h(1:nlay), alpha(1:nlay), &
                      & rayps(itrc), tp) 
              else
-                call direct_P_arrival(nlay-1, h(2:nlay), alpha(2:nlay), &
+                call direct_arrival(nlay, h(1:nlay), beta(1:nlay), &
                      & rayps(itrc), tp) 
              end if
           end if
@@ -212,19 +212,19 @@ contains
   
   subroutine calc_seis(trc_id, chain_id, nlay, npts, &
        & rayp, ipha, alpha, beta, rho, h, ur_freq, uz_freq)
-    use params, only: delta
+    use params, only: delta, bdep
     implicit none
     integer, intent(in) :: nlay, ipha, npts, trc_id, chain_id
     real(8), intent(in) :: alpha(nlay), beta(nlay)
     real(8), intent(in) :: rho(nlay), h(nlay)
     real(8), intent(in) :: rayp
     complex(kind(0d0)), intent(out) :: ur_freq(npts), uz_freq(npts)
-    real(8) :: omg, domg
+    real(8) :: omg, domg, h_tmp, z_tmp
     integer :: iomg, nhalf, ilay0, ilay, j, l
-    logical :: sea_flag
+    logical :: sea_flag, found_sta
     complex(kind(0d0)) :: e_inv(4,4), p_prod(4,4), sl(4,4), lq(2,2)
     complex(kind(0d0)) :: denom, a, b, p_mat(4,4)
-    
+    complex(kind(0d0)) :: sd_vec(4,1), tmp_sd(4,1), u_sea_surface
     
     ! Check Whether ocean layer exists
     if (beta(1) < 0) then
@@ -287,6 +287,58 @@ contains
           end if
        end if
        
+       ! Case of bore hole
+       if (bdep > 0.d0) then
+          ! Initializse
+          z_tmp = 0.d0
+          if (.not. sea_flag) then
+             sd_vec(1,1) = ur_freq(iomg)
+             sd_vec(2,1) = uz_freq(iomg)
+             sd_vec(3,1) = 0.d0 ! free-surface
+             sd_vec(4,1) = 0.d0 ! free-surface
+          else
+             sd_vec(1,1) = ur_freq(iomg)
+             sd_vec(2,1) = uz_freq(iomg)
+             sd_vec(3,1) = 0.d0 ! traction-free
+             if (ipha >= 0) then
+                sd_vec(4,1) = lq(2,1) * sl(4,1) / (b*sl(4,1)-a*sl(3,1))
+             else
+                sd_vec(4,1) = -lq(2,1) * sl(3,1) / (b*sl(4,1)-a*sl(3,1))
+             end if
+          end if
+          
+          ! downward propagation
+          found_sta = .false.
+          do ilay = ilay0, nlay - 1
+             z_tmp = z_tmp + h(ilay)
+             if (z_tmp < bdep) then
+                ! continue further downward
+                call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
+                     & beta(ilay), rayp, h(ilay), p_mat)
+                sd_vec = matmul(p_mat, sd_vec)
+             else
+                ! terminate
+                h_tmp = bdep + h(ilay) - z_tmp
+                call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
+                     & beta(ilay), rayp, h_tmp, p_mat)
+                sd_vec = matmul(p_mat, sd_vec)
+                found_sta = .true.
+             end if
+          end do
+             
+          if (.not. found_sta) then
+             ! This case corresponds to station locating at the bottom half layer
+             call layer_matrix_sol(omg, rho(nlay), alpha(nlay), &
+                  & beta(nlay), rayp, bdep, p_mat)
+             sd_vec = matmul(p_mat, sd_vec)
+
+          end if
+          
+          ur_freq(iomg) = sd_vec(1,1)
+          uz_freq(iomg) = sd_vec(2,1)
+       end if
+       
+
     end do
     
     return 
@@ -408,7 +460,7 @@ contains
     end do
     wlvl = pcnt * maxval(amp)
     
-    
+     
     do i = 1, n
        z(i) = y(i) * conjg(x(i))/ max(amp(i), wlvl)
     end do
@@ -420,25 +472,49 @@ contains
   
   !---------------------------------------------------------------------
 
-  subroutine direct_P_arrival(nlay, h, v, rayp, t)
+  subroutine direct_arrival(nlay, h, v, rayp, t)
+    use params, only: sdep, bdep
     implicit none 
     integer, intent(in) :: nlay
     real(8), intent(in) :: rayp, h(nlay), v(nlay)
     real(8), intent(out) :: t
+    real(8) ::  z_sum
     integer :: i, i0
-    
+    z_sum = 0.d0
     t = 0.d0
-    if (v(nlay) >= 0.d0) then
-       i0 = 1
+    if (sdep > 0.d0) then
+       i0 = 2
     else
-       i0 = 2 ! sea water
+       i0 = 1
     end if
-    do i = 1, nlay-1
-       t = t + h(i) * sqrt(1.d0 / (v(i)* v(i)) - rayp * rayp)
-    end do
-
+    
+    if (i0 < nlay) then
+       ! layer with station
+       do
+          if (i0 == nlay) then
+             exit
+          end if
+          z_sum = z_sum + h(i0)
+          if (z_sum > bdep) then
+             t = t + (z_sum - bdep) * &
+                  &  sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+             i0 = i0 + 1
+             exit
+          else
+             i0 = i0 + 1
+          end if
+       end do
+       
+       ! Other layers
+       do i = i0, nlay - 1
+          t = t + h(i) * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+       end do
+    else
+       t = t - bdep * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+    end if
+    
     return 
-  end subroutine direct_P_arrival
+  end subroutine direct_arrival
     
   
 end module forward

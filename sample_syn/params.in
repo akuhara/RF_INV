@@ -63,15 +63,20 @@
 # T_START T_END: Start and end of time window to be analyzed
 #                Note: Direct P is assumed to arrive at t=0  
 0.0 5.0
-# DECONV_MODE: Forward computation mode (0: w/o deconvolution, 1: w/ deconvolution)
+# DECONV_MODE: Forward computation mode 
+#            : (0: w/o deconvolution, 1: w/ deconvolution)
 0
 #---------------------------------------------------------
 # Velocity model
 #---------------------------------------------------------
-# SEA_DEP: Water depth (km)
-#          Note: Seismic station is assumed to be placed on 
-#                the seafloor when SEA_DEP > 0  
-0.0
+# SEA_DEP (BORE_HOLE_DEP) : Water depth (km) 
+#                           (Bore hole depth (km))
+#       Note: Seismic station is   assumed to be placed on 
+#             the seafloor when SEA_DEP > 0
+#             BORE_HOLE_DEPTH is optional, which specify
+#             the depth relative to the ground surface or
+#             seafloor
+0.0 1.0
 # VEL_FILE: Input file for reference velocity model
 #           Format: depth(km)  Vp(km/s)  Vs(km/s)
 #           Note:  Need evenly spaced for depth
