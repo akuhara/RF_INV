@@ -6,6 +6,9 @@ Transdimensional inversion of receiver function waveforms by reversible-jump Mar
 
 Any bug report and suggestions are welcome!
 
+# IMPORTANT NOTE
+The code assumes a certain way of normaliztion for input receiver function data, which may be different than ususal.
+
 # Features
  
 * Applicable to OBS & borehole station
