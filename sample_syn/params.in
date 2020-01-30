@@ -69,7 +69,7 @@
 #---------------------------------------------------------
 # Velocity model
 #---------------------------------------------------------
-# SEA_DEP (BORE_HOLE_DEP) : Water depth (km) 
+# SEA_DEP (BOREHOLE_DEP) : Water depth (km) 
 #                           (Bore hole depth (km))
 #       Note: Seismic station is   assumed to be placed on 
 #             the seafloor when SEA_DEP > 0

@@ -36,7 +36,10 @@ program main
   real(8), allocatable :: rft(:)
   integer :: i
   
-  sdep = 0.0d0 !
+  
+  sdep = 0.0d0 ! The value here is not used except for its sign
+               ! Set sdep > 0.0 for ocean setting
+
   bdep = 3.0d0
   ntrc = 1
   allocate(a_gus(ntrc), ipha(ntrc))

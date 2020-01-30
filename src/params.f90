@@ -206,7 +206,7 @@ contains
        read(line,*,iostat=ierr2)sdep, bdep
        if (ierr2 /= 0) then
           write(0,*)"ERROR: while reading SEA_DEP" // &
-               & " (BORE_HOLE_DEP)"
+               & " (BOREHOLE_DEP)"
           call mpi_finalize(ierr)
           stop
        end if
@@ -346,7 +346,7 @@ contains
        end do
        write(*,*)"T_START, T_END: ", t_start, t_end
        write(*,*)"DEONV_MODE: ", deconv_mode
-       write(*,*)"SEA_DEP: ", sdep
+       write(*,*)"SEA_DEP BOREHOLE_DEP: ", sdep, bdep
        write(*,*)"VEL_FILE: ", trim(vel_file)
        write(*,*)"VP_MODE: ", vp_mode
        write(*,*)"K_MIN K_MAX: ", k_min, k_max

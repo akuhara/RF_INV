@@ -24,7 +24,6 @@
 !           1-1-1, Yayoi, Bunkyo-ku, Tokyo 113-0032, Japan
 !
 !=======================================================================
-
 module forward
   implicit none 
   !
@@ -139,9 +138,6 @@ contains
     nh = n / 2 + 1
 
     do itrc = 1, ntrc
-       
-       
-
        if (itrc == 1 .or. .not. is_ray_common) then
           call calc_seis(itrc, chain_id, nlay, n, rayps(itrc), &
                & ipha(itrc), alpha, beta, rho, h, freq_r, freq_v)
