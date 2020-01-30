@@ -156,11 +156,12 @@ contains
              call water_level_decon(freq_v, freq_r, rff, nh, 0.001d0)
              tp = 0.d0
           else
-             rff(1:nh) = freq_v(1:nh)
              if (ipha(itrc) == 1) then
+                rff(1:nh) = freq_r(1:nh)
                 call direct_arrival(nlay, h(1:nlay), alpha(1:nlay), &
                      & rayps(itrc), tp) 
              else
+                rff(1:nh) = freq_v(1:nh)
                 call direct_arrival(nlay, h(1:nlay), beta(1:nlay), &
                      & rayps(itrc), tp) 
              end if
@@ -173,10 +174,11 @@ contains
        
        ! IFFT
        call dfftw_execute(ifft)
-       npre = nint((-t_start - tp) / delta)
+
        
        ! Time shift
        if (ipha(itrc) == 1)  then
+          npre = nint((-t_start - tp) / delta)
           do i = 1, nfft
              j = mod(nfft - npre + i, nfft)
              if (j == 0) then
@@ -185,6 +187,7 @@ contains
              rft(i, itrc) = rx(j)
           end do
        else
+          npre = nint((-t_start + tp) / delta)
           do i = 1, nfft
              j = mod(nfft + npre - i + 1, nfft)
              if (j == 0) then

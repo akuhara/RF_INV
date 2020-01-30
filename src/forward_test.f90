@@ -36,20 +36,20 @@ program main
   real(8), allocatable :: rft(:)
   integer :: i
   
-  sdep = 1.0d0 !
-  bdep = 0.0d0
+  sdep = 0.0d0 !
+  bdep = 3.0d0
   ntrc = 1
   allocate(a_gus(ntrc), ipha(ntrc))
   a_gus = [8.0d0]
-  ipha = [1]
+  ipha = [-1]
   deconv_mode = 0
   delta = 0.05d0
-  t_start = -10.d0
+  t_start = -3.d0
   nfft = 1024
-  alpha = [1.5, 5.0]
-  beta  = [-9.0,  2.5]
-  rho   = [1.0, 3.0]
-  h     = [3.0, -10.0]
+  alpha = [5.0, 8.0]
+  beta  = [2.5, 4.0]
+  rho   = [3.0, 3.3]
+  h     = [20.0, -10.0]
   ray_parameters = [0.06]
   allocate(rft(nfft))
   
