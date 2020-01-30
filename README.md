@@ -8,8 +8,8 @@ Any bug report and suggestions are welcome!
 
 # Features
  
-* Applicable to OBS data
-    * Model can include sea water on its top. A station is assumed to locate on the seafloor.  
+* Applicable to OBS & borehole station
+    * Model can include the sea water on its top. Also the station may be buried.  
 * Multiple input traces
     * Can asign different ray parameter and Gaussian-filter for each trace.
 * Can use S receiver functions
