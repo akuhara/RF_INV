@@ -182,19 +182,26 @@ contains
     do itrc = 1, ntrc
        r = exp(-a_gus(itrc)**2 * delta**2)
        r_mat(1:nsmp, 1:nsmp) = 0.d0
+       !do i = 1, nsmp
+       !   r_mat(i, i) = 1.d0
+       !end do
+       !do i = 1, nsmp - 1
+       !   tmpr = r ** (i * i)
+       !   if (tmpr < 1.0d-3) exit
+       !   do j = 1, nsmp - 1
+       !      r_mat(j, j+1) = tmpr
+       !   end do
+       !end do
+       !do i = 2, nsmp - 1
+       !   do j = 1, i - 1
+       !      r_mat(i, j) = r_mat(j, i)
+       !   end do
+       !end do
        do i = 1, nsmp
-          r_mat(i, i) = 1.d0
-       end do
-       do i = 1, nsmp - 1
-          tmpr = r ** (i * i)
-          if (tmpr < 1.0d-3) exit
-          do j = 1, nsmp - 1
-             r_mat(j, j+1) = tmpr
-          end do
-       end do
-       do i = 2, nsmp - 1
-          do j = 1, i - 1
-             r_mat(i, j) = r_mat(j, i)
+          do j = 1, nsmp
+             tmpr = r ** ((i-j) ** 2)
+             if (tmpr < 1.d-3) cycle
+             r_mat(j,i) = tmpr
           end do
        end do
        
