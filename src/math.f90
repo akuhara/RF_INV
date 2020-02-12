@@ -39,6 +39,11 @@ contains
     
     v1 = grnd() 
     v2 = grnd()
+
+    if (v1 == 0.d0) then
+       v1 = 1.0e-16 ! We encountered a very rare case v1=0.0000000000000000
+    end if
+    
     gauss = sqrt(-2.d0 * log(v1)) * cos(pi2 * v2)
     
     return 

@@ -320,8 +320,8 @@ class InvRslt:
         labels.append("Mean model")
         ax.legend(lines, labels, loc="lower left")
         
-        #if vtype == "vpvs":
-        #    ax.set_xlim([1.5, 5.0])
+    
+        ax.set_xlim([v_min, v_max])
             
     #------------------------------------------------------------------    
 
