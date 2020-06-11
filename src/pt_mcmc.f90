@@ -257,11 +257,12 @@ contains
                 vpvs_mean(iz) = vpvs_mean(iz) + alpha(ilay) / beta(ilay)
                 vs_mean(iz) = vs_mean(iz) + beta(ilay)
                 vs_model(iz, nmod) = beta(ilay)
-                
+                vp_model(iz, nmod) = alpha(ilay) !
              else
                 vpvs_mean(iz) = vpvs_min
                 vs_mean(iz) = vs_min
                 vs_model(iz, nmod) = vs_min
+                vp_model(iz, nmod) = alpha(ilay) !
              end if
           end do
           tmpz = tmpz + h(ilay)
@@ -601,12 +602,18 @@ contains
     implicit none
     real(8), intent(in) :: temp, log_lklh1, log_lklh2, log_prior12
     logical, intent(out) :: yn
-    real(8) :: del_s
+    real(8) :: del_s, r
     
     yn = .false.
     del_s = (log_lklh2 - log_lklh1) / temp + log_prior12
     
-    if (log(grnd()) <= del_s) then
+    do
+       r = grnd()
+       if (r >= epsilon(1.d0)) then
+          exit
+       end if
+    end do
+    if (log(r) <= del_s) then
        yn = .true.
     end if
     

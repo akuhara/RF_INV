@@ -88,6 +88,9 @@ contains
     call mpi_gather(vs_model, nbin_z*int(niter*nchains/ncorr), &
          & MPI_REAL8, vs_model_sum, nbin_z*int(niter*nchains/ncorr), &
          & MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
+    call mpi_gather(vp_model, nbin_z*int(niter*nchains/ncorr), &
+         & MPI_REAL8, vp_model_sum, nbin_z*int(niter*nchains/ncorr), &
+         & MPI_REAL8, 0, MPI_COMM_WORLD, ierr)
 
     
 
@@ -104,7 +107,7 @@ contains
        end if
        
        ! All models
-       out_file = trim(out_dir) // "/" // 'vs_models'
+       out_file = trim(out_dir) // "/" // 'all_models'
        open(141, file = out_file, status = "unknown", &
             & iostat = ierr)
        if (ierr /= 0) then
@@ -118,7 +121,8 @@ contains
           end if
           write(141,*)""
           do iz = 1, nbin_z
-             write(141,*)(iz - 0.5d0) * dbin_z, vs_model_sum(iz, imod)
+             write(141,*)(iz - 0.5d0) * dbin_z, vp_model_sum(iz, imod), &
+                  & vs_model_sum(iz, imod)
           end do
           write(141,*)""
        end do

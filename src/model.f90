@@ -227,7 +227,6 @@ contains
     !------------------------
     if (h(i) < h_min) then
        is_valid = .false.
-       !write(*,*)"FALSE"
     end if
     !------------------------
     

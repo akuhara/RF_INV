@@ -211,7 +211,7 @@ contains
   
   subroutine calc_seis(trc_id, chain_id, nlay, npts, &
        & rayp, ipha, alpha, beta, rho, h, ur_freq, uz_freq)
-    use params, only: delta, bdep
+    use params, only: delta!, bdep
     implicit none
     integer, intent(in) :: nlay, ipha, npts, trc_id, chain_id
     real(8), intent(in) :: alpha(nlay), beta(nlay)
@@ -287,55 +287,55 @@ contains
        end if
        
        ! Case of bore hole
-       if (bdep > 0.d0) then
-          ! Initializse
-          z_tmp = 0.d0
-          if (.not. sea_flag) then
-             sd_vec(1,1) = ur_freq(iomg)
-             sd_vec(2,1) = uz_freq(iomg)
-             sd_vec(3,1) = 0.d0 ! free-surface
-             sd_vec(4,1) = 0.d0 ! free-surface
-          else
-             sd_vec(1,1) = ur_freq(iomg)
-             sd_vec(2,1) = uz_freq(iomg)
-             sd_vec(3,1) = 0.d0 ! traction-free
-             if (ipha >= 0) then
-                sd_vec(4,1) = lq(2,1) * sl(4,1) / (b*sl(4,1)-a*sl(3,1))
-             else
-                sd_vec(4,1) = -lq(2,1) * sl(3,1) / (b*sl(4,1)-a*sl(3,1))
-             end if
-          end if
-          
-          ! downward propagation
-          found_sta = .false.
-          do ilay = ilay0, nlay - 1
-             z_tmp = z_tmp + h(ilay)
-             if (z_tmp < bdep) then
-                ! continue further downward
-                call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
-                     & beta(ilay), rayp, h(ilay), p_mat)
-                sd_vec = matmul(p_mat, sd_vec)
-             else
-                ! terminate
-                h_tmp = bdep + h(ilay) - z_tmp
-                call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
-                     & beta(ilay), rayp, h_tmp, p_mat)
-                sd_vec = matmul(p_mat, sd_vec)
-                found_sta = .true.
-             end if
-          end do
-             
-          if (.not. found_sta) then
-             ! This case corresponds to station locating at the bottom half layer
-             call layer_matrix_sol(omg, rho(nlay), alpha(nlay), &
-                  & beta(nlay), rayp, bdep, p_mat)
-             sd_vec = matmul(p_mat, sd_vec)
-
-          end if
-          
-          ur_freq(iomg) = sd_vec(1,1)
-          uz_freq(iomg) = sd_vec(2,1)
-       end if
+       !if (bdep > 0.d0) then
+       !   ! Initializse
+       !   z_tmp = 0.d0
+       !   if (.not. sea_flag) then
+       !      sd_vec(1,1) = ur_freq(iomg)
+       !      sd_vec(2,1) = uz_freq(iomg)
+       !      sd_vec(3,1) = 0.d0 ! free-surface
+       !      sd_vec(4,1) = 0.d0 ! free-surface
+       !   else
+       !      sd_vec(1,1) = ur_freq(iomg)
+       !      sd_vec(2,1) = uz_freq(iomg)
+       !      sd_vec(3,1) = 0.d0 ! traction-free
+       !      if (ipha >= 0) then
+       !         sd_vec(4,1) = lq(2,1) * sl(4,1) / (b*sl(4,1)-a*sl(3,1))
+       !      else
+       !         sd_vec(4,1) = -lq(2,1) * sl(3,1) / (b*sl(4,1)-a*sl(3,1))
+       !      end if
+       !   end if
+       !   
+       !   ! downward propagation
+       !   found_sta = .false.
+       !   do ilay = ilay0, nlay - 1
+       !      z_tmp = z_tmp + h(ilay)
+       !      if (z_tmp < bdep) then
+       !         ! continue further downward
+       !         call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
+       !              & beta(ilay), rayp, h(ilay), p_mat)
+       !         sd_vec = matmul(p_mat, sd_vec)
+       !      else
+       !         ! terminate
+       !         h_tmp = bdep + h(ilay) - z_tmp
+       !         call layer_matrix_sol(omg, rho(ilay), alpha(ilay), &
+       !              & beta(ilay), rayp, h_tmp, p_mat)
+       !         sd_vec = matmul(p_mat, sd_vec)
+       !         found_sta = .true.
+       !      end if
+       !   end do
+       !      
+       !   if (.not. found_sta) then
+       !      ! This case corresponds to station locating at the bottom half layer
+       !      call layer_matrix_sol(omg, rho(nlay), alpha(nlay), &
+       !           & beta(nlay), rayp, bdep, p_mat)
+       !      sd_vec = matmul(p_mat, sd_vec)
+       !
+       !   end if
+       !   
+       !   ur_freq(iomg) = sd_vec(1,1)
+       !   uz_freq(iomg) = sd_vec(2,1)
+       !end if
        
 
     end do
@@ -472,7 +472,7 @@ contains
   !---------------------------------------------------------------------
 
   subroutine direct_arrival(nlay, h, v, rayp, t)
-    use params, only: sdep, bdep
+    use params, only: sdep!, bdep
     implicit none 
     integer, intent(in) :: nlay
     real(8), intent(in) :: rayp, h(nlay), v(nlay)
@@ -486,31 +486,34 @@ contains
     else
        i0 = 1
     end if
-    
-    if (i0 < nlay) then
-       ! layer with station
-       do
-          if (i0 == nlay) then
-             exit
-          end if
-          z_sum = z_sum + h(i0)
-          if (z_sum > bdep) then
-             t = t + (z_sum - bdep) * &
-                  &  sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
-             i0 = i0 + 1
-             exit
-          else
-             i0 = i0 + 1
-          end if
-       end do
-       
-       ! Other layers
-       do i = i0, nlay - 1
-          t = t + h(i) * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
-       end do
-    else
-       t = t - bdep * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
-    end if
+    do i = i0, nlay - 1
+       t = t+ h(i) * sqrt(1.d0 / (v(i) * v(i)) - rayp * rayp)
+    end do
+
+    !if (i0 < nlay) then
+    !   ! layer with station
+    !   do
+    !      if (i0 == nlay) then
+    !         exit
+    !      end if
+    !      z_sum = z_sum + h(i0)
+    !      if (z_sum > bdep) then
+    !         t = t + (z_sum - bdep) * &
+    !              &  sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+    !         i0 = i0 + 1
+    !         exit
+    !      else
+    !         i0 = i0 + 1
+    !      end if
+    !   end do
+    !   
+    !   ! Other layers
+    !   do i = i0, nlay - 1
+    !      t = t + h(i) * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+    !   end do
+    !else
+    !   t = t - bdep * sqrt(1.d0 / (v(i0)* v(i0)) - rayp * rayp)
+    !end if
     
     return 
   end subroutine direct_arrival

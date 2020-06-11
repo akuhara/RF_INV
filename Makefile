@@ -34,12 +34,9 @@ OBJS2   = src/make_syn.o src/model.o src/params.o src/sort.o src/mt19937.o \
 	  src/likelihood.o src/forward.o src/fftw.o \
 	  src/pt_mcmc.o src/math.o src/prior.o
 
-TARGET3 = $(BINDIR)/forward_test
-OBJS3   = src/forward_test.o src/params.o src/fftw.o src/forward.o
 
 
-
-all: $(TARGET1) $(TARGET2) $(TARGET3)
+all: $(TARGET1) $(TARGET2)
 
 $(TARGET1): $(OBJS1)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
@@ -49,9 +46,6 @@ $(TARGET2): $(OBJS2)
 	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
 	$(MF90) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK) 
 
-$(TARGET3): $(OBJS3)
-	@if [ ! -d $(BINDIR) ]; then mkdir $(BINDIR); fi
-	$(MF90) $(FFLAGS) $^ -o $@ $(FFTW) $(LAPACK) 
 
 src/rf_inv.o: params.mod mt19937.mod fftw.mod model.mod likelihood.mod \
               forward.mod pt_mcmc.mod mcmc_out.mod
@@ -65,7 +59,6 @@ src/mcmc_out.o: params.mod
 src/make_syn.o: params.mod model.mod pt_mcmc.mod likelihood.mod forward.mod \
 	        fftw.mod mt19937.mod math.mod
 src/math.o: mt19937.mod
-src/forward_test.o: params.mod forward.mod fftw.mod
 
 clean:
 	rm -f *.mod bin/inv_PT_RF src/*.o *.o

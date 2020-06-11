@@ -231,8 +231,13 @@ class InvRslt:
         y, x = np.mgrid[slice(z_min, z_min + nbin_z * del_z, del_z), \
                         slice(v_min, v_min + nbin_v * del_v, del_v)]
         data = df.pivot(ylabel, xlabel, zlabel)
+        
+        # Normalize
+        df_below_sea = df[df[ylabel] > float(param["z_min"])]
+        p_max = df_below_sea[zlabel].max()
+        
         mappable = ax.pcolormesh(x, y, data, cmap='hot_r', \
-                                 vmin=0.0, vmax=0.2)
+                                 vmin=0.0, vmax=p_max)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_ylim([z_max + del_z, 0])

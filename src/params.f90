@@ -64,7 +64,7 @@ module params
   real(8), allocatable :: rayps(:)
   real(8), allocatable :: obs(:,:)
   real(8) :: delta, t_start, t_end
-  real(8) :: sdep, bdep
+  real(8) :: sdep!, bdep
 
   ! Receiver function
   integer :: nfft, deconv_mode
@@ -200,23 +200,28 @@ contains
     
     
     call get_line(io_param, line)
-    bdep = 0.d0
-    read(line,*,iostat=ierr) sdep, bdep
-    if (ierr /=0) then
-       read(line,*,iostat=ierr2)sdep
-       if (ierr2 /= 0) then
-          write(0,*)"ERROR: while reading SEA_DEP" // &
-               & " (BOREHOLE_DEP)"
-          call mpi_finalize(ierr)
-          stop
-       end if
-    end if
-    if (bdep < 0.d0) then
-       write(0,*)"ERROR: BOREHOLE_DEP must be positive"
-       call mpi_finalize(ierr)
-       stop
-    end if
-    write(io_copy, *) sdep, bdep
+    !bdep = 0.d0
+    read(line,*,iostat=ierr) sdep!, bdep
+    !if (ierr /=0) then
+    !   read(line,*,iostat=ierr2)sdep
+    !   if (ierr2 /= 0) then
+    !      write(0,*)"ERROR: while reading SEA_DEP" // &
+    !           & " (BOREHOLE_DEP)"
+    !      call mpi_finalize(ierr)
+    !      stop
+    !   end if
+    !end if
+    !if (bdep < 0.d0) then
+    !   write(0,*)"ERROR: BOREHOLE_DEP must be positive"
+    !   call mpi_finalize(ierr)
+    !   stop
+    !else if (bdep > 0.d0) then
+    !   write(0,*)"ERROR; BOREHOLE_DEP is not available for now"
+    !   call mpi_finalize(ierr)
+    !   stop
+    !end if
+    
+    write(io_copy, *) sdep!, bdep
 
     call get_line(io_param, line)
     read(line,*) vel_file
@@ -236,7 +241,7 @@ contains
     
     call get_line(io_param, line)
     read(line, *) h_min
-    write(io_copy, *) h_min
+    write(io_copy, *) h_min 
 
     call get_line(io_param, line)
     read(line, *) prior_mode
@@ -350,12 +355,12 @@ contains
        end do
        write(*,*)"T_START, T_END: ", t_start, t_end
        write(*,*)"DEONV_MODE: ", deconv_mode
-       write(*,*)"SEA_DEP BOREHOLE_DEP: ", sdep, bdep
+       write(*,*)"SEA_DEP: ", sdep
        write(*,*)"VEL_FILE: ", trim(vel_file)
        write(*,*)"VP_MODE: ", vp_mode
        write(*,*)"K_MIN K_MAX: ", k_min, k_max
        write(*,*)"Z_MIN Z_MAX: ", z_min, z_max
-       write(*,*)"H_MIN: ", h_min        
+       write(*,*)"H_MIN: ", h_min
        write(*,*)"PRIOR_TYPE: ", prior_mode
        write(*,*)"DEV_DVS_PRIOR: ", dvs_prior
        write(*,*)"DEV_DVP_PRIOR: ", dvp_prior

@@ -64,7 +64,6 @@ program make_syn
   
   call init_likelihood(verb)
   
-    
   call format_model(k(1), z(:,1), dvp(:,1), dvs(:,1), &
        & nlay, alpha, beta, rho, h, is_valid)
 
