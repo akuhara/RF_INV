@@ -225,7 +225,8 @@ contains
     rho(i) = vp_to_rho(alpha(i))
     h(i)   = tmp_z(1) - sdep
     !------------------------
-    if (h(i) < h_min) then
+    !if (h(i) < h_min) then
+    if (h(i) < 0.125 * alpha(i)) then
        is_valid = .false.
     end if
     !------------------------
