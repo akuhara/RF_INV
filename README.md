@@ -1,3 +1,8 @@
+# Note 
+
+__This software is no longer being updated. 
+Please consider adopting our new software, SEIS_FILO (https://github.com/akuhara/SEIS_FILO), which offers enhanced features like joint inversion with dispersion curves.__
+
 # RF_INV
 
 Transdimensional inversion of receiver function waveforms by reversible-jump Markov-chain Monte Carlo
